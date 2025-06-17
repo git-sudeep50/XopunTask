@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CreateOtpDto } from 'src/auth/dto/otp-auth.dto';
 import { RedisService } from 'src/redis/redis.service';
 import { MailService } from 'src/mail/mail.service';
+import { randomInt } from 'crypto';
 
 @Injectable()
 export class OtpService {
@@ -10,7 +11,8 @@ export class OtpService {
     private mailService: MailService,
   ) {}
   async generateOtp(createOtpDto: CreateOtpDto) {
-    await this.redisService.setOTP(createOtpDto.email, '568985', 300);
+    const newOtp = randomInt(100000,999999).toString();
+    await this.redisService.setOTP(createOtpDto.email, newOtp, 300);
     const otp = await this.redisService.getOTP(createOtpDto.email);
     const data = {
       to: createOtpDto.email,

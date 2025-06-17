@@ -12,6 +12,7 @@ import { OtpService } from 'src/otp/otp.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { CreateOtpDto } from './dto/otp-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
+import { VerifyOtpDto } from './dto/verify-otp.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -23,9 +24,15 @@ export class AuthController {
   @Post('generate-otp')
   async generateOtp(@Body() createOtpDto: CreateOtpDto) {
     const user = await this.authService.checkUser(createOtpDto.email);
-    if(user) return {message: `User already exist`};
+    if(user) return {message: `User already exists`};
     await this.otpService.generateOtp(createOtpDto);
     return {message: `Otp sent successfully`};
+  }
+
+  @Post('verify-otp')
+  async verifyOtp(@Body() verifyOtpDto: VerifyOtpDto) {
+    console.log(verifyOtpDto);
+    return {message: verifyOtpDto}
   }
 
 
