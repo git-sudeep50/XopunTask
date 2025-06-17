@@ -1,0 +1,2 @@
+export const SignUp_IMG='https://media.istockphoto.com/id/1279502184/photo/project-management-concept-with-gantt-chart.jpg?s=612x612&w=0&k=20&c=cyH6eJgMjZPuhYwCp1mc334Y3EOngkPAibyBBokJ7To='
+export const BG_IMG='https://t3.ftcdn.net/jpg/03/09/78/04/360_F_309780437_bztYRNRTMDZYw3tYMSvxY3taQcE7mJqE.jpg'
