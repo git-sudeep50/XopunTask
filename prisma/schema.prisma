@@ -1,0 +1,149 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  uid String    @id @default(uuid())
+  uname String
+  email String
+  password String
+  Project Project[]
+
+  Task Task[]
+
+  Subtask Subtask[]
+
+  UserProjects UserProjects[]
+
+  UserTasks UserTasks[]
+
+  UserSubTasks UserSubTasks[]
+
+  TaskComments TaskComments[]
+
+  SubTaskComments SubTaskComments[]
+}
+
+enum ProjectStatus {
+  ASSIGNED
+  PROGRESS
+  COMPLETED
+  EXCEEDED
+}
+
+enum Status {
+  ASSIGNED
+  PROGRESS
+  COMPLETED
+  EXCEEDED
+}
+
+enum Priority {
+  URGENT
+  HIGH
+  MEDIUM
+  LOW
+}
+
+model Project{
+  pid String @id @default(uuid())
+  pname String
+  startDate DateTime
+  dueDate DateTime
+  status ProjectStatus
+  owner User @relation(fields: [ownerId],references: [uid])
+  ownerId String
+
+  Task Task[]
+
+  UserProjects UserProjects[]
+}
+
+model Task{
+  tid String @id @default(uuid())
+  tname String
+  startDate DateTime
+  dueDate DateTime
+  status Status
+  owner User @relation(fields: [ownerId],references: [uid])
+  ownerId String
+  project Project @relation(fields: [projectId],references: [pid], onDelete: Cascade)
+  projectId String
+  priority Priority
+
+  Subtask Subtask[]
+
+  UserTasks UserTasks[]
+
+  TaskComments TaskComments[]
+}
+
+model Subtask{
+  sid String @id @default(uuid())
+  tname String
+  startDate DateTime
+  dueDate DateTime
+  status Status
+  owner User @relation(fields: [ownerId],references: [uid])
+  ownerId String
+  task Task @relation(fields: [taskId],references: [tid], onDelete: Cascade)
+  taskId String
+  priority Priority
+
+  UserSubTasks UserSubTasks[]
+
+  SubTaskComments SubTaskComments[]
+}
+
+model UserProjects{
+  user User @relation(fields:[userId], references: [uid])
+  userId String
+  project Project @relation(fields:[projectId], references: [pid], onDelete: Cascade)
+  projectId String
+  @@id([userId, projectId])
+}
+
+model UserTasks{
+  user User @relation(fields:[userId], references: [uid])
+  userId String
+  tasks Task @relation(fields:[taskId], references: [tid], onDelete: Cascade)
+  taskId String
+  @@id([userId, taskId])
+}
+
+model UserSubTasks{
+  user User @relation(fields:[userId], references: [uid])
+  userId String
+  subtasks Subtask @relation(fields:[subTaskId], references: [sid], onDelete: Cascade)
+  subTaskId String
+  @@id([userId, subTaskId])
+}
+
+model TaskComments{
+  cid String @id @default(uuid())
+  user User @relation(fields:[userId], references: [uid])
+  userId String
+  tasks Task @relation(fields:[taskId], references: [tid], onDelete: Cascade)
+  taskId String
+  comment String
+}
+
+model SubTaskComments{
+  cid String @id @default(uuid())
+  user User @relation(fields:[userId], references: [uid])
+  userId String
+  subtask Subtask @relation(fields:[subTaskId], references: [sid], onDelete: Cascade)
+  subTaskId String
+  comment String
+}
