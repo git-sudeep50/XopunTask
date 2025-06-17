@@ -14,10 +14,9 @@ datasource db {
 }
 
 model User {
-  uid String    @id @default(uuid())
-  uname String
-  email String
-  password String
+  uid String    @id 
+  uname String?
+  password String?
   Project Project[]
 
   Task Task[]
