@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BASE_URL, BG_IMG, SignUp_IMG } from '../utils/contsant';
 import axios from 'axios';
+import { requestFormReset } from 'react-dom';
 
 const SignUpSignIn: React.FC = () => {
   const [isSignUp, setIsSignUp] = useState<boolean>(false);
@@ -14,6 +15,18 @@ const SignUpSignIn: React.FC = () => {
   const [sendOtp,setSendOtp]=useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   
+  useEffect(()=>{
+    setEmail('');
+    setPassword('');
+    setName('');
+    setOtp('');
+    setErrors({});
+    setSendOtp(false);
+    setIsOtpVerified(false);
+  console.log("EMAIL IS:",email);
+  
+  },[isSignUp]);
+
   const  handleSendOtp=async()=>{
     const newErrors: { email?: string; name?: string; password?: string } = {};
   if (!email) newErrors.email = "Email is required";
@@ -72,12 +85,15 @@ const SignUpSignIn: React.FC = () => {
       return;
     }
     setErrors({});
+    setIsLoading(true);
     try {
       const res = await axios.post(BASE_URL + "auth/login", { email: email, password: password }, { withCredentials: true });
       // if (res.data.success) {
       //   alert("Sign In Successfully");
       //   window.location.href = "/dashboard";
       // }
+      setIsLoading(false);
+      alert("Sign In Successfully");
     } catch (e: unknown) {
       if (e instanceof Error) {
         console.error(e.message);
@@ -110,9 +126,12 @@ const SignUpSignIn: React.FC = () => {
                 id="email"
                 placeholder="Enter your email"
                 required
+                value={email}
                 className="w-full px-3  py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 onChange={(e)=>{setEmail(e.target.value);
                   setErrors((prev)=>({...prev,email:''}))
+                  console.log("EMAIL IS:",e.target.value);
+                  
                 }}
               />
               {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
@@ -126,6 +145,7 @@ const SignUpSignIn: React.FC = () => {
                 <input
                   type="text"
                   id="otp"
+                  value={otp}
                   placeholder="Enter OTP"
                   className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                   onChange={(e) => setOtp(e.target.value)}
@@ -143,6 +163,7 @@ const SignUpSignIn: React.FC = () => {
                 id="name"
                 placeholder="Enter your name"
                 required
+                value={name}
                 className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               onChange={(e)=>{setName(e.target.value);
                 setErrors((prev) => ({ ...prev, name: '' }))
@@ -161,6 +182,7 @@ const SignUpSignIn: React.FC = () => {
                 id="password"
                 placeholder="Enter your password"
                 required
+                value={password}
                 className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 onChange={(e)=>{setPassword(e.target.value);
                   setErrors((prev) => ({ ...prev, password: '' }))
@@ -204,15 +226,26 @@ const SignUpSignIn: React.FC = () => {
               type="button"
               className="w-full bg-green-500 text-white py-2 rounded hover:bg-green-700 transition"
               onClick={handleSignIn}            
-            >
-              Sign In
+            >{isLoading ?(
+                 <div className='flex justify-center items-center'>
+      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+      </svg>
+     
+    </div>
+              ) :
+              "Sign In"}
+
             </button>)}
           </form>
           <p className="mt-4 text-sm text-center">
             {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
             <span
               className="text-blue-600 cursor-pointer hover:underline"
-              onClick={() => setIsSignUp(!isSignUp)}
+              onClick={() => {setIsSignUp(!isSignUp); 
+              }
+            }
             >
               {isSignUp ? 'Sign In' : 'Sign Up'}
             </span>
