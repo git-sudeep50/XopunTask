@@ -58,9 +58,10 @@ enum Priority {
 model Project{
   pid String @id @default(uuid())
   pname String
-  startDate DateTime
-  dueDate DateTime
-  status ProjectStatus
+  description String?
+  startDate DateTime @default(now())
+  dueDate DateTime?
+  status ProjectStatus @default(ASSIGNED)
   owner User @relation(fields: [ownerId],references: [uid])
   ownerId String
 
@@ -72,14 +73,15 @@ model Project{
 model Task{
   tid String @id @default(uuid())
   tname String
-  startDate DateTime
-  dueDate DateTime
-  status Status
+  description String?
+  startDate DateTime @default(now())
+  dueDate DateTime?
+  status Status @default(ASSIGNED)
   owner User @relation(fields: [ownerId],references: [uid])
   ownerId String
   project Project @relation(fields: [projectId],references: [pid], onDelete: Cascade)
   projectId String
-  priority Priority
+  priority Priority @default(LOW)
 
   Subtask Subtask[]
 
@@ -91,9 +93,10 @@ model Task{
 model Subtask{
   sid String @id @default(uuid())
   tname String
-  startDate DateTime
-  dueDate DateTime
-  status Status
+  description String?
+  startDate DateTime @default(now())
+  dueDate DateTime?
+  status Status @default(ASSIGNED)
   owner User @relation(fields: [ownerId],references: [uid])
   ownerId String
   task Task @relation(fields: [taskId],references: [tid], onDelete: Cascade)
@@ -105,11 +108,17 @@ model Subtask{
   SubTaskComments SubTaskComments[]
 }
 
+enum Role {
+  OWNER
+  MEMBER
+}
+
 model UserProjects{
   user User @relation(fields:[userId], references: [uid])
   userId String
   project Project @relation(fields:[projectId], references: [pid], onDelete: Cascade)
   projectId String
+  role Role
   @@id([userId, projectId])
 }
 
