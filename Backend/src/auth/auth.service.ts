@@ -34,7 +34,7 @@ export class AuthService {
         password: hashedPassword,
       },
     });
-    return { verified: true, message: 'User created successfully' };
+    return { verified: true, message: 'User created and logged in successfully' };
   }
 
   async validateUser({email,password}:LoginDto){

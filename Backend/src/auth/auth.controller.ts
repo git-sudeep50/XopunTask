@@ -31,8 +31,17 @@ export class AuthController {
   }
 
   @Post('verify-otp')
-  async verifyOtp(@Body() verifyOtpDto: VerifyOtpDto) {
+  async verifyOtp(@Body() verifyOtpDto: VerifyOtpDto,@Res({ passthrough: true }) response: Response) {
     const res = await this.authService.verifyOtpAndCreateUser(verifyOtpDto);
+    const user =this.authService.validateUser(verifyOtpDto);
+    if(!user) return {message: `User does not exist or password is incorrect`};
+    const token = await this.authService.login(verifyOtpDto);
+    response.cookie('jwt', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production', 
+    sameSite: 'lax',
+    maxAge: 24 * 60 * 60 * 1000, 
+  });
     return res;
   }
 
