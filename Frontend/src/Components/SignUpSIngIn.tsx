@@ -12,6 +12,8 @@ const SignUpSignIn: React.FC = () => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [errors, setErrors] = useState<{ email?: string; name?: string; password?: string ;otp:string;api:string}>({});
   const [sendOtp,setSendOtp]=useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  
   const  handleSendOtp=async()=>{
     const newErrors: { email?: string; name?: string; password?: string } = {};
   if (!email) newErrors.email = "Email is required";
@@ -23,9 +25,11 @@ const SignUpSignIn: React.FC = () => {
     return;
   }
     setErrors({});
+    setIsLoading(true);
     try{
       await axios.post(BASE_URL+"auth/generate-otp", {email:email},{withCredentials:true});
       setSendOtp(true);
+      setIsLoading(false);
     }
     catch (e: unknown) {
       if (e instanceof Error) {
@@ -39,12 +43,14 @@ const SignUpSignIn: React.FC = () => {
   const handleVerifyOTP = async () => {
     const newErrors:{ otp?: string; api?: string } = {};
     if (!otp) newErrors.otp = "OTP is required";
+    setIsLoading(true);
     try {
       const res=await axios.post(BASE_URL+"auth/verify-otp", {email:email,otp:otp,userName:name,password:password},{withCredentials:true});
       if(res.data.success){
         setIsOtpVerified(true);
         setSendOtp(false);
       }
+      setIsLoading(false);
       alert("Sign Up Successfully");
     } catch (e: unknown) {
       
@@ -182,7 +188,17 @@ const SignUpSignIn: React.FC = () => {
               className="w-full bg-green-500 text-white py-2 rounded hover:bg-green-700 transition"
               onClick={sendOtp?handleVerifyOTP:handleSendOtp}
             >
-              {sendOtp?"Verify OTP":"Send OTP"}
+              {isLoading ?(
+                 <div className='flex justify-center items-center'>
+      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+      </svg>
+     
+    </div>
+              ):(
+              sendOtp?"Verify OTP":"Send OTP"
+              )}
             </button>)}
            {!sendOtp && !isSignUp  &&( <button
               type="button"
