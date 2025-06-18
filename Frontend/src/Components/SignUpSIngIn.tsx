@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
-import { BG_IMG, SignUp_IMG } from '../utils/contsant';
+import { BASE_URL, BG_IMG, SignUp_IMG } from '../utils/contsant';
 import axios from 'axios';
 
 const SignUpSignIn: React.FC = () => {
   const [isSignUp, setIsSignUp] = useState<boolean>(true);
   const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [name, setName] = useState<string>('');
   const [isOtpVerified, setIsOtpVerified] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
   const [sendOtp,setSendOtp]=useState<boolean>(false);
   const  handleSendOtp=async()=>{
     try{
-      await axios.post('http://localhost:5000/api/auth/send-otp', {email:email},{withCredentials:true});
+      await axios.post(BASE_URL+"auth/generate-otp", {email:email},{withCredentials:true});
       setSendOtp(true);
     }
     catch (e: unknown) {
@@ -21,20 +24,33 @@ const SignUpSignIn: React.FC = () => {
     }
   }
 
+  const handleVerifyOTP = async () => {
+    try {
+      const res=await axios.post(BASE_URL+"auth/verify-otp", {email:email,otp:password,name:name,password:password},{withCredentials:true});
+      if(res.data.success){
+        setIsOtpVerified(true);
+        setSendOtp(false);
+      }
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        console.error(e.message);
+      }
+    }
+  }
   return (
     
-    <div className=" h-screen w-full justify-center items-center flex bg-gray-100"style={{backgroundImage:`url(${BG_IMG})`}}>
-      <div className='h-[90vh] w-[90vw] flex   '>
+    <div className=" h-screen w-full justify-center items-center flex bg-"style={{backgroundImage:`url(${BG_IMG})`}}>
+      <div className='h-[80vh] w-[70vw] flex shadow-slate-600 shadow-2xl rounded-3xl overflow-hidden'>
 
-      <div className="w-1/2 flex  rounded-tl-lg rounded-bl-lg bg-blue-100">
-      <h1 className='top-0 mt-0 ml-2  font-bold '>সপোন<span className='font-bold'>Task</span></h1>
-      <div className='w-full mt-24 ml-5 items-center justify-center'>
+      <div className="w-1/2 flex  rounded-tl-3xl rounded-bl-3xl bg-white">
+      <h1 className='top-0 mt-2 ml-4 text-green-600 font-bold '>সপোন<span className='font-bold'>Task</span></h1>
+      <div className='w-full mt-24 ml-0 mr-6 items-center justify-center'>
         <div className="w-full max-w-md p-8 rounded-lg shadow-lg">
-          <h2 className="text-2xl font-bold mb-6 text-center">
-            {isSignUp ? 'Sign Up' : 'Sign In'}
+          <h2 className="text-4xl font-bold mb-6 text-center">
+            {isSignUp ? 'Sign up' : 'Sign in'}
           </h2>
           <form className="space-y-4">
-            <div>
+            {!sendOtp &&(<div>
               <label htmlFor="email" className="block text-sm font-medium mb-1">
                 Email
               </label>
@@ -42,17 +58,12 @@ const SignUpSignIn: React.FC = () => {
                 type="email"
                 id="email"
                 placeholder="Enter your email"
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+                className="w-full px-3  py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 onChange={(e)=>setEmail(e.target.value)}
               />
-            </div>
-            <button
-              type="button"
-              className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
-              onClick={handleSendOtp}
-            >
-              Send OTP
-            </button>
+            </div>)}
+
             {isSignUp && sendOtp && (
               <div>
                 <label htmlFor="otp" className="block text-sm font-medium mb-1">
@@ -66,20 +77,56 @@ const SignUpSignIn: React.FC = () => {
                 />
               </div>
             )}
-            {sendOtp&&(<div>
-              <label htmlFor="password" className="block text-sm font-medium mb-1">
-                Password
+            { isSignUp&& !sendOtp &&(<div>
+              <label  className="block text-sm font-medium mb-1">
+                Name
               </label>
               <input
-                type="password"
-                id="password"
-                placeholder="Enter your password"
+                type="name"
+                id="name"
+                placeholder="Enter your name"
+                required
                 className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={(e)=>setName(e.target.value)}
               />
             </div>)}
-           {sendOtp &&( <button
+            {!sendOtp &&(<>
+              <div>
+              <label  className="block text-sm font-medium mb-1">
+               { isSignUp?"Create Password":"Password"}
+              </label>
+              <input
+                type={showPassword?"text":"password"}
+                id="password"
+                placeholder="Enter your password"
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="mt-2">
+        <label className="text-sm flex items-center gap-2">
+          <input
+            type="checkbox"
+            onChange={(e) => setShowPassword(e.target.checked)}
+            className="h-4 w-4"
+          />
+          Show Password
+        </label>
+      </div>
+      </>          
+          
+          )}
+
+            {isSignUp&& (<button
+              type="button"
+              className="w-full bg-green-500 text-white py-2 rounded hover:bg-green-700 transition"
+              onClick={sendOtp?handleVerifyOTP:handleSendOtp}
+            >
+              {sendOtp?"Verify OTP":"Send OTP"}
+            </button>)}
+           {!sendOtp && !isSignUp  &&( <button
               type="submit"
-              className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+              className="w-full bg-green-500 text-white py-2 rounded hover:bg-green-700 transition"
             >
               {isSignUp ? 'Sign Up' : 'Sign In'}
             </button>)}
@@ -102,7 +149,7 @@ const SignUpSignIn: React.FC = () => {
         <img
           src={SignUp_IMG}
           alt="Sign Up Illustration"
-          className="object-cover w-full h-full rounded-[50px,30px,20px,30px] shadow-lg rounded-tr-lg rounded-br-lg"
+          className="object-cover w-full h-full  shadow-lg rounded-tr-3xl rounded-br-3xl"
         />
         
       </div>
