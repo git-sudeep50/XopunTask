@@ -17,7 +17,7 @@ export class OtpService {
     const data = {
       to: createOtpDto.email,
       subject: 'OTP for Registration',
-      text: `Your otp is ${otp}`,
+      text: `Your OTP is ${otp}. This OTP will exppire in 5 minutes`,
     }
     await this.mailService.sendMail(data);
     return { message: `Otp sent successfully ${otp}` };
