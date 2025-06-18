@@ -25,41 +25,56 @@ export class AuthController {
   @Post('generate-otp')
   async generateOtp(@Body() createOtpDto: CreateOtpDto) {
     const user = await this.authService.checkUser(createOtpDto.email);
-    if(user) return {message: `User already exists`};
+    if (user) return { message: `User already exists` };
     await this.otpService.generateOtp(createOtpDto);
-    return {message: `Otp sent successfully`};
+    return { message: `Otp sent successfully` };
   }
 
   @Post('verify-otp')
-  async verifyOtp(@Body() verifyOtpDto: VerifyOtpDto,@Res({ passthrough: true }) response: Response) {
+  async verifyOtp(
+    @Body() verifyOtpDto: VerifyOtpDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
     const res = await this.authService.verifyOtpAndCreateUser(verifyOtpDto);
-    const user =this.authService.validateUser(verifyOtpDto);
-    if(!user) return {message: `User does not exist or password is incorrect`};
+    const user = await this.authService.validateUser(verifyOtpDto);
+    if (!user)
+      return { message: `User does not exist or password is incorrect` };
     const token = await this.authService.login(verifyOtpDto);
     response.cookie('jwt', token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production', 
-    sameSite: 'lax',
-    maxAge: 24 * 60 * 60 * 1000, 
-  });
-    return res;
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+    return {
+      res,
+      userData: { email: user?.uid, userName: user?.uname },
+      token: token,
+    };
   }
 
   @Post('login')
-  async login(@Body() loginDto:LoginDto,@Res({ passthrough: true }) response: Response,){
+  async login(
+    @Body() loginDto: LoginDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
     const user = await this.authService.validateUser(loginDto);
-    if(!user) return {message: `User does not exist or password is incorrect`};
+    if (!user)
+      return { message: `User does not exist or password is incorrect` };
     const token = await this.authService.login(loginDto);
-    console.log("TOKEN",token);
+    console.log('USER', user);
 
     response.cookie('jwt', token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production', 
-    sameSite: 'lax',
-    maxAge: 24 * 60 * 60 * 1000, 
-  });
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000,
+    });
 
-    return {message: `User logged in successfully`};
+    return {
+      message: `User logged in successfully`,
+      userData: { email: user?.uid, userName: user?.uname },
+      token: token,
+    };
   }
-
 }
