@@ -7,6 +7,8 @@ import {
   Param,
   Delete,
   Res,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { OtpService } from 'src/otp/otp.service';
@@ -37,8 +39,6 @@ export class AuthController {
   ) {
     const res = await this.authService.verifyOtpAndCreateUser(verifyOtpDto);
     const user = await this.authService.validateUser(verifyOtpDto);
-    if (!user)
-      return { message: `User does not exist or password is incorrect` };
     const token = await this.authService.login(verifyOtpDto);
     response.cookie('jwt', token, {
       httpOnly: true,
@@ -59,8 +59,6 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
   ) {
     const user = await this.authService.validateUser(loginDto);
-    if (!user)
-      return { message: `User does not exist or password is incorrect` };
     const token = await this.authService.login(loginDto);
     console.log('USER', user);
 
