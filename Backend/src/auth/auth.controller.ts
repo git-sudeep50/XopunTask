@@ -6,13 +6,14 @@ import {
   Patch,
   Param,
   Delete,
+  Res,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { OtpService } from 'src/otp/otp.service';
-import { CreateAuthDto } from './dto/create-auth.dto';
+import { LoginDto } from './dto/login.dto';
 import { CreateOtpDto } from './dto/otp-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
@@ -33,6 +34,23 @@ export class AuthController {
   async verifyOtp(@Body() verifyOtpDto: VerifyOtpDto) {
     const res = await this.authService.verifyOtpAndCreateUser(verifyOtpDto);
     return res;
+  }
+
+  @Post('login')
+  async login(@Body() loginDto:LoginDto,@Res({ passthrough: true }) response: Response,){
+    const user = await this.authService.validateUser(loginDto);
+    if(!user) return {message: `User does not exist or password is incorrect`};
+    const token = await this.authService.login(loginDto);
+    console.log("TOKEN",token);
+
+    response.cookie('jwt', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production', 
+    sameSite: 'lax',
+    maxAge: 24 * 60 * 60 * 1000, 
+  });
+
+    return {message: `User logged in successfully`};
   }
 
 }
