@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { RedisService } from 'src/redis/redis.service';
@@ -22,10 +22,10 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({
       where: { uid: verifyOtpDto.email },
     });
-    if (user) return { message: `User already exists` };
+    if (user) throw new HttpException('User already exists', HttpStatus.CONFLICT);
     const otp = await this.redisService.getOTP(verifyOtpDto.email);
     console.log('OTP  ', otp);
-    if (otp !== verifyOtpDto.otp) return { message: `Invalid otp` };
+    if (otp !== verifyOtpDto.otp) throw new HttpException('Invalid OTP', HttpStatus.UNAUTHORIZED);
     const hashedPassword = await bcrypt.hash(verifyOtpDto.password, 10);
     await this.prisma.user.create({
       data: {
@@ -39,9 +39,9 @@ export class AuthService {
 
   async validateUser({email,password}:LoginDto){
     const user = await this.prisma.user.findUnique({where: {uid: email}});
-    if(!user) return null;
+    if(!user) throw new HttpException('User does not exist', HttpStatus.NOT_FOUND);;
     const isPasswordValid = await bcrypt.compare(password,user.password);
-    if(!isPasswordValid) return null;
+    if(!isPasswordValid) throw new HttpException('Invalid password', HttpStatus.UNAUTHORIZED);
     return user;
   }
 

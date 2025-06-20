@@ -7,3 +7,8 @@ export class CreateMailDto {
     @IsString()
     text:string;
 }
+
+export class ProjectInvitationDto extends CreateMailDto{
+    @IsString()
+    projectId:string
+}
