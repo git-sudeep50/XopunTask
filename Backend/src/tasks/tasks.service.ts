@@ -14,6 +14,7 @@ import { ProjectInvitationDto } from 'src/mail/dto/create-mail.dto';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { UpdateProjectDto } from './dto/update-project-dto';
+import { AssignTaskDto } from './dto/assign-task-dto';
 
 @Injectable()
 export class TasksService {
@@ -26,7 +27,11 @@ export class TasksService {
     try {
       const userProjects = await this.prisma.userProjects.findMany({
         where: { userId: userId },
-        include: { project: true },
+        include: {
+          project: {
+            include: { owner: { select: { uid: true, uname: true } } },
+          },
+        },
       });
       console.log(userProjects);
       return userProjects;
@@ -34,6 +39,54 @@ export class TasksService {
       throw new HttpException(
         {
           message: 'Failed to get user projects',
+          error: error.message || 'Unknown error',
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async getAllProjectMembers(projectId: string) {
+    try {
+      const projectMembers = await this.prisma.userProjects.findMany({
+        where: { projectId: projectId },
+        include: {
+          user: {
+            select: {
+              uname: true,
+              uid: true,
+            },
+          },
+        },
+      });
+      return projectMembers;
+    } catch (error) {
+      throw new HttpException(
+        {
+          message: 'Failed to get project members',
+          error: error.message || 'Unknown error',
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async getUserTasksByDate(userId: string, date: string) {
+    try {
+      const dateObj = new Date(date);
+      const tasks = await this.prisma.$queryRaw`
+  SELECT t.*
+  FROM "Task" t
+  JOIN "UserTasks" ta ON ta."taskId" = t."tid"
+  WHERE ta."userId" = ${userId}
+    AND DATE(t."startDate") = DATE(${dateObj.toISOString()})
+`;
+
+      return tasks;
+    } catch (error) {
+      throw new HttpException(
+        {
+          message: 'Failed to get user tasks',
           error: error.message || 'Unknown error',
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -74,29 +127,214 @@ export class TasksService {
     }
   }
 
-  async updateProject(projectId: string, updateProjectDto: UpdateProjectDto) {
-  const project = await this.prisma.project.findUnique({
-    where: { pid: projectId },
-  });
+  async createTask(createTaskDto: CreateTaskDto) {
+    const data = {
+      tname: createTaskDto.taskName,
+      description: createTaskDto.description,
+      startDate: createTaskDto.startDate
+        ? new Date(createTaskDto.startDate)
+        : new Date(),
+      dueDate: createTaskDto.dueDate ? new Date(createTaskDto.dueDate) : null,
+      projectId: createTaskDto.projectId,
+      ownerId: createTaskDto.ownerId,
+      priority: createTaskDto.priority,
+    };
 
-  if (!project) {
-    throw new NotFoundException('Project not found');
+    try {
+      const project = await this.prisma.project.findUnique({
+        where: { pid: createTaskDto.projectId },
+      });
+
+      if (!project) {
+        throw new NotFoundException('Project not found');
+      }
+      const task = await this.prisma.task.create({ data });
+      const userTask = await this.prisma.userTasks.create({
+        data: {
+          userId: createTaskDto.ownerId,
+          taskId: task.tid,
+        },
+      });
+      return { message: 'Task created successfully', task };
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+
+      throw new HttpException(
+        {
+          message: 'Failed to create task',
+          error: error.message || 'Unknown error',
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
-  if (updateProjectDto.startDate) updateProjectDto.startDate = new Date(updateProjectDto.startDate);
-  if (updateProjectDto.dueDate) updateProjectDto.dueDate = new Date(updateProjectDto.dueDate);
+  async updateTask(taskId: string, updateTaskDto: UpdateTaskDto) {
+    try {
+      const task = await this.prisma.task.findUnique({
+        where: { tid: taskId },
+      });
 
-  const updated = await this.prisma.project.update({
-    where: { pid: projectId },
-    data: updateProjectDto,
-  });
+      if (!task) {
+        throw new NotFoundException('Task not found');
+      }
 
-  return {
-    message: 'Project updated successfully',
-    updatedProject: updated,
-  };
-}
+      if (updateTaskDto.startDate)
+        updateTaskDto.startDate = new Date(updateTaskDto.startDate);
+      if (updateTaskDto.dueDate)
+        updateTaskDto.dueDate = new Date(updateTaskDto.dueDate);
 
+      const data = {
+        tname: updateTaskDto.taskName,
+        description: updateTaskDto.description,
+        startDate: updateTaskDto.startDate,
+        dueDate: updateTaskDto.dueDate,
+        priority: updateTaskDto.priority,
+        status: updateTaskDto.status,
+      };
+
+      const updated = await this.prisma.task.update({
+        where: { tid: taskId },
+        data,
+      });
+
+      return {
+        message: 'Task updated successfully',
+        updatedTask: updated,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+
+      throw new HttpException(
+        {
+          message: 'Failed to update task',
+          error: error.message || 'Unknown error',
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async assignTask(assignTaskDto: AssignTaskDto) {
+    try {
+      const task = await this.prisma.task.findUnique({
+        where: { tid: assignTaskDto.taskId },
+      });
+
+      if (!task) {
+        throw new NotFoundException('Task not found');
+      }
+
+      const users = await this.prisma.user.findMany({
+        where: { uid: { in: assignTaskDto.userIds } },
+      });
+
+      if (users.length !== assignTaskDto.userIds.length) {
+        throw new NotFoundException('One or more users not found');
+      }
+
+      const userTasks = await this.prisma.userTasks.createMany({
+        data: assignTaskDto.userIds.map((uid) => {
+          return {
+            userId: uid,
+            taskId: assignTaskDto.taskId,
+          };
+        }),
+      });
+
+      return {
+        message: 'Task assigned successfully',
+        userTasks,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+
+      throw new HttpException(
+        {
+          message: 'Failed to assign task',
+          error: error.message || 'Unknown error',
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async removeUserFromTask(userId: string, taskId: string) {
+    try {
+      const userTask = await this.prisma.userTasks.findUnique({
+        where: {
+          userId_taskId: {
+            userId: userId,
+            taskId: taskId,
+          },
+        },
+      });
+
+      if (!userTask) {
+        throw new NotFoundException('User not found in task');
+      }
+
+      const deleted = await this.prisma.userTasks.delete({
+        where: {
+          userId_taskId: {
+            userId: userId,
+            taskId: taskId,
+          },
+        },
+      });
+
+      return {
+        message: 'User removed from task successfully',
+        deleted,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+
+      throw new HttpException(
+        {
+          message: 'Failed to remove user from task',
+          error: error.message || 'Unknown error',
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+  async updateProject(projectId: string, updateProjectDto: UpdateProjectDto) {
+    try {
+      const project = await this.prisma.project.findUnique({
+        where: { pid: projectId },
+      });
+
+      if (!project) {
+        throw new NotFoundException('Project not found');
+      }
+
+      if (updateProjectDto.startDate)
+        updateProjectDto.startDate = new Date(updateProjectDto.startDate);
+      if (updateProjectDto.dueDate)
+        updateProjectDto.dueDate = new Date(updateProjectDto.dueDate);
+
+      const updated = await this.prisma.project.update({
+        where: { pid: projectId },
+        data: updateProjectDto,
+      });
+
+      return {
+        message: 'Project updated successfully',
+        updatedProject: updated,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+
+      throw new HttpException(
+        {
+          message: 'Failed to update project',
+          error: error.message || 'Unknown error',
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 
   async sendProjectInvitation(projectId: string, memberId: string) {
     const mailObj = {

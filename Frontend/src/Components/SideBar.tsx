@@ -1,6 +1,8 @@
+import { useNavigate } from "react-router-dom";
 
 
 const SideBar:React.FC=()=> {
+  const navigate=useNavigate();
   return (
     <div
   className="relative flex h-full w-full max-w-[20rem] flex-col rounded-xl bg-gray-100 bg-clip-border p-4 text-gray-700 shadow-xl shadow-blue-gray-900/5">
@@ -10,8 +12,9 @@ const SideBar:React.FC=()=> {
     </h5>
   </div>
   <nav className="flex min-w-[240px] flex-col gap-1 p-2 font-sans text-base font-normal text-blue-gray-700">
-    <div role="button"
-      className="flex items-center w-full p-3 leading-tight transition-all rounded-lg outline-none text-start hover:bg-gray-300 hover:bg-opacity-80 hover:text-blue-700 hover:text-blue-gray-900 focus:bg-blue-gray-50 focus:bg-opacity-80 focus:text-blue-gray-900 active:bg-blue-gray-50 active:bg-opacity-80 active:text-blue-900">
+    <button
+      className="flex items-center w-full p-3 leading-tight transition-all rounded-lg outline-none text-start hover:bg-gray-300 hover:bg-opacity-80 hover:text-blue-700 hover:text-blue-gray-900 focus:bg-blue-gray-50 focus:bg-opacity-80 focus:text-blue-gray-900 active:bg-blue-500 active:bg-opacity-80 active:text-blue-900"
+      onClick={()=>{navigate("/home")}}>
       <div className="grid mr-4 place-items-center">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"
           className="w-5 h-5">
@@ -21,9 +24,10 @@ const SideBar:React.FC=()=> {
         </svg>
       </div>
       Dashboard
-    </div>
+    </button>
     <div role="button"
-      className="flex items-center w-full p-3 leading-tight transition-all rounded-lg outline-none text-start hover:bg-gray-300 hover:bg-opacity-80 hover:text-blue-700 focus:bg-blue-gray-50 focus:bg-opacity-80 focus:text-blue-gray-900 active:bg-blue-gray-50 active:bg-opacity-80 active:text-blue-900">
+      className="flex items-center w-full p-3 leading-tight transition-all rounded-lg outline-none text-start hover:bg-gray-300 hover:bg-opacity-80 hover:text-blue-700 focus:bg-blue-gray-50 focus:bg-opacity-80 focus:text-blue-gray-900 active:bg-blue-gray-50 active:bg-opacity-80 active:text-blue-900"
+      onClick={()=>{navigate("/home/projects")}}>
       <div className="grid mr-4 place-items-center">
        <svg 
   xmlns="http://www.w3.org/2000/svg" 
