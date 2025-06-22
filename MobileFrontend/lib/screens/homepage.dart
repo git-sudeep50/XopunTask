@@ -3,6 +3,7 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:task_manager/customwigdets/statuscard.dart';
 import 'package:task_manager/customwigdets/taskCard.dart';
 import 'package:task_manager/models/tasksModel.dart';
+import 'package:task_manager/services/shared_pref_services.dart';
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -12,6 +13,19 @@ class Homepage extends StatefulWidget {
 }
 
 class _HomepageState extends State<Homepage> {
+  String name = " User";
+  void initState() {
+    super.initState();
+
+    _getUserName(); // Only called once here
+  }
+
+  void _getUserName() async {
+    String _name = await PreferenceHelper.getName();
+    setState(() {
+      name = _name;
+    });
+  }
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -19,7 +33,7 @@ class _HomepageState extends State<Homepage> {
 
     return Scaffold(
       body: Container(
-        color: const Color.fromARGB(64, 0, 200, 255),
+        color: const Color.fromARGB(64, 150, 223, 244),
         padding: const EdgeInsets.symmetric(horizontal: 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,9 +58,9 @@ class _HomepageState extends State<Homepage> {
                   fontSize: 30,
                   color: Color.fromARGB(101, 0, 0, 0),
                 ),
-                children: const [
+                children: [
                   TextSpan(
-                    text: ' User👋',
+                    text: ' $name👋',
                     style: TextStyle(
                       fontSize: 40,
                       color: Colors.black,
