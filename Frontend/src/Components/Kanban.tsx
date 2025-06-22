@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { DndContext, closestCorners } from '@dnd-kit/core';
 import { Droppable } from './Droppable';
 import { Draggable } from './Draggable';
+import { useSelector } from 'react-redux';
 
 interface Project {
   projectId: string;
@@ -18,8 +19,8 @@ interface KanbanProps {
 const columns = ['ASSIGNED', 'PROGRESS', 'COMPLETED', 'EXCEEDED'];
 
 const Kanban: React.FC<KanbanProps> = ({ project }) => {
-  console.log('Project data:', project);
-  
+  //console.log('Project data:', project);
+  const { email } = useSelector((state: any) => state.user);
   const initialState = columns.reduce((acc, column) => {
     acc[column] = project.filter((p) => p.status === column);
     return acc;
@@ -73,7 +74,9 @@ const Kanban: React.FC<KanbanProps> = ({ project }) => {
                   <div className="bg-white p-3 rounded shadow mb-3">
                     <h3 className="font-bold">{proj.pname}</h3>
                     <p className="text-sm text-gray-500">Owner: {proj.uname}</p>
-                    <p className="text-sm text-gray-400">Due: {proj.dueDate}</p>
+                   <p className="text-black text-base font-normal mt-1">
+            Owner: <span className="font-semibold text-black">{proj.uname[1]===email? <span className="text-green-500">You</span> : proj.uname[0]}</span>
+          </p>
                   </div>
                 </Draggable>
               ))}

@@ -3,10 +3,11 @@ import { BASE_URL } from "../utils/contsant";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { FaClipboardList } from "react-icons/fa";
+import { useSelector } from "react-redux";
 
 interface ProjectCardProps {
   pname: string;
-  uname: string;
+  uname: [string, string];
   dueDate: string;
   status: string;
   role?: string;
@@ -29,8 +30,10 @@ const ProjectCard: React.FC<ProjectCardProps & { projectId: string; refresh: () 
     'ASSIGNED': 'bg-red-100 text-red-800',
     'EXCEEDED': 'bg-gray-100 text-red-600',
   };
+  console.log(uname[1]);
+  
   const allStatuses = ['ASSIGNED', 'PROGRESS', 'COMPLETED', 'EXCEEDED'];
-
+  const {email}=useSelector((state:any) => state.user);
   const handleStatusChange = async (newStatus: string) => {
     if (newStatus === currentStatus) return;
 
@@ -89,7 +92,7 @@ const ProjectCard: React.FC<ProjectCardProps & { projectId: string; refresh: () 
             </div>
           )}
           <p className="text-black text-base font-normal mt-1">
-            Owner: <span className="font-semibold text-black">{uname}</span>
+            Owner: <span className="font-semibold text-black">{uname[1]===email? <span className="text-green-500">You</span> : uname[0]}</span>
           </p>
         </div>
       </div>
