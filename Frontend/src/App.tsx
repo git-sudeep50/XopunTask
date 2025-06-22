@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom"
+import { BrowserRouter, Navigate, Route, Routes, useNavigate } from "react-router-dom"
 import SignUpSIngIn from "./Components/SignUpSIngIn"
 import Homepage from "./pages/Home.page"
 import Projects from "./Components/Projects"
@@ -7,7 +7,6 @@ import Dashboard from "./Components/Dashboard"
 
 function App() {
   
-
   return (
     <BrowserRouter>
     <Routes>
@@ -16,8 +15,10 @@ function App() {
       <Route path="/home" element={<Dashboard/>}/>
       <Route path="/home/projects" element={<Projects/>}/>
       </Route>
+          <Route path="*" element={<Navigate to="/" />} />
+
     </Routes>
-    
+
     </BrowserRouter>
   )
 }
