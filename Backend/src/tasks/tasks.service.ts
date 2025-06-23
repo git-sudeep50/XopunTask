@@ -612,11 +612,20 @@ export class TasksService {
 
   async deleteProject(projectId: string) {
     try {
+      const project = await this.prisma.project.findUnique({
+        where: { pid: projectId },
+      });
+
+      if(!project)
+        throw new HttpException('Project does not exist', HttpStatus.NOT_FOUND);
+
       const deleted = await this.prisma.project.delete({
         where: { pid: projectId },
       });
       return { message: 'Project deleted successfully', deleted }
     } catch (error) {
+      if (error instanceof HttpException) throw error;
+
       throw new HttpException(
         {
           message: 'Failed to delete project',
@@ -629,11 +638,20 @@ export class TasksService {
 
   async deleteTask(taskId: string) {
     try {
+      const task = await this.prisma.task.findUnique({
+        where: { tid: taskId },
+      })
+
+      if(!task)
+        throw new HttpException('Task does not exist', HttpStatus.NOT_FOUND);
+
       const deleted = await this.prisma.task.delete({
         where: { tid: taskId },
       });
       return { message: 'Task deleted successfully', deleted }
     } catch (error) {
+      if(error instanceof HttpException) throw error;
+
       throw new HttpException(
         {
           message: 'Failed to delete task',
@@ -646,11 +664,20 @@ export class TasksService {
 
   async deleteSubtask(subtaskId: string) {
     try {
+      const subTask = await this.prisma.subtask.findUnique({
+        where: { sid: subtaskId },
+      });
+
+      if(!subTask)
+        throw new HttpException('Subtask does not exist', HttpStatus.NOT_FOUND);
+
       const deleted = await this.prisma.subtask.delete({
         where: { sid: subtaskId },
       });
       return { message: 'Subtask deleted successfully', deleted }
     } catch (error) {
+      if(error instanceof HttpException) throw error;
+      
       throw new HttpException(
         {
           message: 'Failed to delete subtask',
