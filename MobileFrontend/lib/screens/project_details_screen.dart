@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:task_manager/models/projectMemberModel.dart';
 import 'package:task_manager/models/projectsModel.dart';
 import 'package:task_manager/screens/projectTasks.dart';
 import 'package:task_manager/services/PorjectServices.dart';
@@ -114,6 +115,36 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen>
     );
   }
 
+  Widget _buildMembersTab() {
+    return FutureBuilder<List<ProjectMember>>(
+      future: ProjectService.getProjectMembers(widget.project.pid),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text("❌ Error: ${snapshot.error}"));
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(child: Text("No members found"));
+        }
+
+        final members = snapshot.data!;
+        return ListView.separated(
+          itemCount: members.length,
+          separatorBuilder: (_, __) => const Divider(),
+          itemBuilder: (context, index) {
+            final member = members[index];
+            return ListTile(
+              leading: const CircleAvatar(child: Icon(Icons.person)),
+              title: Text(member.name),
+              subtitle: Text(member.userId),
+              trailing: Text(member.role),
+            );
+          },
+        );
+      },
+    );
+  }
+
   Widget _buildOverviewTab() {
     final project = widget.project;
     return Padding(
@@ -181,8 +212,8 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen>
               controller: _tabController,
               children: [
                 _buildOverviewTab(),
-                TasksTab(project: widget.project, role: widget.role),
-                _buildOverviewTab(), // Replace with members screen later if needed
+                TasksTab(),
+                _buildMembersTab(),
               ],
             ),
           ),
