@@ -1,7 +1,12 @@
 import React from 'react';
 import { Briefcase, CheckCircle, Clock } from 'lucide-react'; // Icons (optional, from lucide-react)
+import { useSelector } from 'react-redux';
 
 const Dashboard: React.FC = () => {
+
+  const {email,userName}=useSelector((state:any) => state.user);
+
+
   const statistics = [
     { title: 'Tasks Completed', icon:  <CheckCircle size={18} />, count: 24, days: 2 },
     { title: 'Tasks Pending', icon: <Clock size={18}/>, count: 10, days: 5 },
@@ -22,7 +27,7 @@ const Dashboard: React.FC = () => {
     <div className="flex flex-col relative h-full w-full max-w-6xl mx-auto p-6 bg-gray-100 rounded-xl shadow-lg">
      
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Hello Sakil 👋</h1>
+        <h1 className="text-3xl font-bold text-gray-800">{`Hello ${userName} 👋`}</h1>
         <p className="text-gray-500">Welcome back to your task dashboard!</p>
       </div>
 

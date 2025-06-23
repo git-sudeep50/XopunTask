@@ -11,7 +11,7 @@ interface ModalProps{
     closeModal:React.Dispatch<React.SetStateAction<boolean>>
 }
 
-const CreateProjectModal:React.FC<ModalProps> = ({closeModal}) => {
+const JoinProject:React.FC<ModalProps> = ({closeModal}) => {
     
    const [title, setTitle] = useState<string>('');
    const [description, setDescription] = useState<string>('');
@@ -44,16 +44,16 @@ const CreateProjectModal:React.FC<ModalProps> = ({closeModal}) => {
             >
                 <IoIosCloseCircleOutline />
             </button>
-            <h2 className='text-xl font-semibold mb-4'>Create New Project</h2>
+            <h2 className='text-xl font-semibold mb-4'>Join Project</h2>
             <form>
             <div className='mb-4'>
-                <label className='block text-sm font-medium mb-1'>Project Name</label>
+                <label className='block text-sm font-medium mb-1'>Project ID</label>
                 <input
                 type='text'
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-                placeholder='Enter project name'
+                placeholder='Enter The Project ID'
                 />
             </div>
             <div className='mb-4'>
@@ -88,4 +88,4 @@ const CreateProjectModal:React.FC<ModalProps> = ({closeModal}) => {
   )
 }
 
-export default CreateProjectModal
+export default JoinProject

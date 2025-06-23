@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { BASE_URL, BG_IMG, SignUp_IMG } from '../utils/contsant';
 import axios from 'axios';
 import { requestFormReset } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { adduser } from '../utils/userSlice';
 
 const SignUpSignIn: React.FC = () => {
   const [isSignUp, setIsSignUp] = useState<boolean>(false);
@@ -14,7 +17,8 @@ const SignUpSignIn: React.FC = () => {
   const [errors, setErrors] = useState<{ email?: string; name?: string; password?: string ;otp:string;api:string}>({});
   const [sendOtp,setSendOtp]=useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  
+  const navigate=useNavigate();
+  const dispatch=useDispatch();
   useEffect(()=>{
     setEmail('');
     setPassword('');
@@ -88,12 +92,12 @@ const SignUpSignIn: React.FC = () => {
     setIsLoading(true);
     try {
       const res = await axios.post(BASE_URL + "auth/login", { email: email, password: password }, { withCredentials: true });
-      // if (res.data.success) {
-      //   alert("Sign In Successfully");
-      //   window.location.href = "/dashboard";
-      // }
+      console.log("Response:", res.data.userData);
+      dispatch(adduser(res.data.userData));
+
       setIsLoading(false);
       alert("Sign In Successfully");
+      navigate("/home");
     } catch (e: unknown) {
       if (e instanceof Error) {
         console.error(e.message);

@@ -21,7 +21,7 @@ class StatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: color, // Let your container's color show through
-      borderRadius: BorderRadius.circular(25),
+      borderRadius: BorderRadius.circular(10),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () {
