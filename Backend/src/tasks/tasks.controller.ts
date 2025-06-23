@@ -30,6 +30,12 @@ export class TasksController {
     return res;
   }
 
+  @Get('project-tasks/:projectId')
+  async getTasksByProject(@Param('projectId') projectId: string) {
+    const res = await this.tasksService.getTasksByProject(projectId);
+    return res;
+  }
+
   @Post('create-project')
   createProject(@Body() createProjectDto:CreateProjectDto){
     const res = this.tasksService.createProject(createProjectDto);

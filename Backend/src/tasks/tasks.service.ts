@@ -15,6 +15,7 @@ import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { UpdateProjectDto } from './dto/update-project-dto';
 import { AssignTaskDto } from './dto/assign-task-dto';
+import { CreateSubtaskDto } from './dto/create-subtask-dto';
 
 @Injectable()
 export class TasksService {
@@ -94,6 +95,61 @@ export class TasksService {
     }
   }
 
+  async getTasksByProject(projectId: string) {
+    try{
+      const project = await this.prisma.project.findUnique({
+        where: {
+          pid: projectId,
+        }
+      });
+
+      if (!project) {
+        throw new NotFoundException('Project not found');
+      }
+
+      const tasks = await this.prisma.task.findMany({
+        where: {
+          projectId: projectId,
+        },
+      });
+
+      return tasks;
+    } catch (error) {
+      if(error instanceof HttpException) throw error;
+
+      throw new HttpException(
+        {
+          message: 'Failed to get tasks',
+          error: error.message || 'Unknown error',
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async getSubtasks(taskId: string) {
+  try {
+    const result = await this.prisma.$queryRaw`
+      SELECT 
+        t.tid AS task_id,
+        t.title AS task_title,
+        s.sid AS subtask_id,
+        s.title AS subtask_title,
+        s.status AS subtask_status
+      FROM 
+        "tasks" t
+      JOIN 
+        "subtasks" s ON t.tid = s.taskId
+      WHERE 
+        t.tid = ${taskId};
+    `;
+    console.log("Result:", result);
+    return result;
+  } catch (error) {
+    throw new Error(`Failed to fetch subtasks: ${error.message}`);
+  }
+}
+
   async createProject(createProjectDto: CreateProjectDto) {
     const data = {
       pname: createProjectDto.title,
@@ -162,6 +218,29 @@ export class TasksService {
       throw new HttpException(
         {
           message: 'Failed to create task',
+          error: error.message || 'Unknown error',
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async crateSubtask(createSubtaskDto: CreateSubtaskDto) {
+    try{
+      const task = await this.prisma.task.findUnique({
+        where: { tid: createSubtaskDto.taskId },
+      });
+      if (!task) {
+        throw new NotFoundException('Task not found');
+      }
+
+      const data = {
+        
+      }
+    }catch(error){
+      throw new HttpException(
+        {
+          message: 'Failed to create subtask',
           error: error.message || 'Unknown error',
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
