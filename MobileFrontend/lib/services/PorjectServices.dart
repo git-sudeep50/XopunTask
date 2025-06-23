@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:task_manager/models/projectMemberModel.dart';
 import 'package:task_manager/models/userProjectsModel.dart';
 
 class ProjectService {
-  static const String baseUrl = 'http://192.168.94.8:7000/tasks';
+  static const String baseUrl = 'http://192.168.188.8:7000/tasks';
 
   static Future<List<UserProject>> getUserProjects(String userEmail) async {
     final url = Uri.parse('$baseUrl/projects/$userEmail');
@@ -111,6 +112,19 @@ class ProjectService {
       }
     } catch (e) {
       return {"success": false, "message": "Error: $e"};
+    }
+  }
+
+  static Future<List<ProjectMember>> getProjectMembers(String projectId) async {
+    final response = await http.get(
+      Uri.parse("$baseUrl/project-members/$projectId"),
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonData = jsonDecode(response.body);
+      return jsonData.map((e) => ProjectMember.fromJson(e)).toList();
+    } else {
+      throw Exception("Failed to load members");
     }
   }
 }
