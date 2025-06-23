@@ -4,26 +4,40 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { FaClipboardList } from "react-icons/fa";
 import { useSelector } from "react-redux";
+import { useNavigate, useNavigation } from "react-router-dom";
 
 interface ProjectCardProps {
-  pname: string;
-  uname: [string, string];
-  dueDate: string;
-  status: string;
+  item: {
+    projectId: string;
+    project: {
+      pname: string;
+      owner: {
+        uname: string;
+        uid: string;
+      };
+      dueDate: string;
+      status: string;
+    };
+  };
   role?: string;
 }
 
 
 const ProjectCard: React.FC<ProjectCardProps & { projectId: string; refresh: () => void }> = ({
-  pname,
-  uname,
-  dueDate,
-  status,
-  projectId,
+  item,
   refresh,
 }) => {
+  const projectId = item.projectId;
+  const pname = item.project.pname;
+  const uname = [item.project.owner.uname, item.project.owner.uid];
+  const dueDate = item.project.dueDate
+    ? new Date(item.project.dueDate).toISOString().split('T')[0]
+    : '';
+  const status = item.project.status;
+
   const [currentStatus, setCurrentStatus] = useState(status);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const navigate = useNavigate();
   const statusColors = {
     'COMPLETED': 'bg-green-100 text-green-800',
     'PROGRESS': 'bg-yellow-100 text-yellow-800',
@@ -38,9 +52,9 @@ const ProjectCard: React.FC<ProjectCardProps & { projectId: string; refresh: () 
     if (newStatus === currentStatus) return;
 
     try {
-      const response = await axios.post(BASE_URL + "task/project/status/changed", {
-        projectId,
-        newStatus,
+      const response = await axios.patch(BASE_URL + `tasks/update-project/${projectId}`, {
+        // pid: projectId,
+        status:newStatus,
       });
       if (response.status === 200) {
         toast.success(`Successfully updated to ${newStatus}`);
@@ -56,9 +70,15 @@ const ProjectCard: React.FC<ProjectCardProps & { projectId: string; refresh: () 
   };
 
   return (
-    <div className="relative cursor-pointer h-fit bg-gray-50 shadow-2xl rounded-lg w-full mb-4 border border-gray-700">
+    <div className="relative cursor-pointer h-fit bg-gray-50 shadow-2xl rounded-lg w-full mb-4 border border-gray-700"
+      // onClick={() => {
+      //   navigate(`/home/project/${projectId}`, { state: { item: item } });
+      // }}
+    >
       <div className='flex justify-between items-center'>
-        <div>
+        <div  onClick={() => {
+        navigate(`/home/project/${projectId}`, { state: { item: item } });
+       }}>
           <div className="flex ml-2 mt-2 items-center gap-4">
             <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-xl bg-pink-500">
               <FaClipboardList />

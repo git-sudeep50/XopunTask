@@ -10,20 +10,13 @@ import { useSelector } from 'react-redux';
 import ProjectCard from './ProjectCard';
 import JoinProject from './Join.project';
 
-// Loader Component
+
 const Loader = () => (
   <div className="flex justify-center items-center h-64">
     <div className="w-12 h-12 border-4 border-dashed rounded-full animate-spin border-blue-500"></div>
   </div>
 );
 
-interface ProjectCardProps {
-  pname: string;
-  uname: [string, string];
-  dueDate: string;
-  status: string;
-  role?: string;
-}
 
 const Projects: React.FC = () => {
   const [display, setDisplay] = useState<'List' | 'Kanban'>('List');
@@ -120,15 +113,16 @@ const Projects: React.FC = () => {
             {projects.map((item) => (
               <ProjectCard
                 key={item.projectId}
-                projectId={item.projectId}
-                pname={item.project.pname}
-                uname={[item.project.owner.uname, item.project.owner.uid]}
-                dueDate={
-                  item.project.dueDate
-                    ? new Date(item.project.dueDate).toISOString().split('T')[0]
-                    : ''
-                }
-                status={item.project.status}
+                // projectId={item.projectId}
+                // pname={item.project.pname}
+                // uname={[item.project.owner.uname, item.project.owner.uid]}
+                // dueDate={
+                //   item.project.dueDate
+                //     ? new Date(item.project.dueDate).toISOString().split('T')[0]
+                //     : ''
+                // }
+                // status={item.project.status}
+                item={item}
                 refresh={getProjects}
               />
             ))}
