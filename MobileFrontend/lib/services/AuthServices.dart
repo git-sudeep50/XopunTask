@@ -2,7 +2,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class AuthService {
-  static const String baseurl = "http://192.168.94.8:7000/auth";
+  static const String baseurl = "http://192.168.188.8:7000/auth";
 
   static Future<String?> generateOtp(String email) async {
     try {

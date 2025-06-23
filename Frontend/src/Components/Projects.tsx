@@ -8,58 +8,65 @@ import axios from 'axios';
 import { BASE_URL } from '../utils/contsant';
 import { useSelector } from 'react-redux';
 import ProjectCard from './ProjectCard';
-
-//type ProjectStatus =  'ASSIGNED'| 'PROGRESS' | 'COMPLETED' | 'EXCEEDED';
-
+import JoinProject from './Join.project';
 
 
-interface ProjectCardProps {
-  pname: string;
-  uname: string;
-  dueDate: string;
-  status: string;
-  role?: string;
-}
+const Loader = () => (
+  <div className="flex justify-center items-center h-64">
+    <div className="w-12 h-12 border-4 border-dashed rounded-full animate-spin border-blue-500"></div>
+  </div>
+);
+
+
 const Projects: React.FC = () => {
   const [display, setDisplay] = useState<'List' | 'Kanban'>('List');
   const [showOptions, setShowOptions] = useState(false);
-  const [projects, setProjects] = useState<ProjectCardProps[]>([]);
-  const {email}=useSelector((state:any) => state.user);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const { email } = useSelector((state: any) => state.user);
 
- 
-const getProjects = async () => {
-  try {
-    const response = await axios.get(BASE_URL + `tasks/projects/${email}`);
-    
-    setProjects(response.data);
-  } catch (error) {
-    console.error("Error fetching projects:", error);
-  }
-};
+  const getProjects = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(BASE_URL + `tasks/projects/${email}`);
+      setProjects(response.data);
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+      toast.error("Failed to fetch projects.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
+    getProjects();
+  }, []);
 
-  useEffect(()=>{   
-  getProjects();
-  },[]);
+  const [openCreateProjectModal, setOpenCreateProjectModal] = useState<boolean>(false);
+  const [openJoinModal, setOpenJoinModal] = useState<boolean>(false);
 
- 
-const [openModal, setOpenModal] = useState<boolean>(false);
   return (
     <div className="min-h-screen bg-gradient-to-br px-4 py-6 relative">
       <Toaster position="top-right" />
 
       <div className="flex justify-between items-center mb-6 mx-auto">
-        <button className="bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition">Join</button>
-        <button className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition"
-        onClick={() =>{ setOpenModal(true);
-          setOpenModal(true);
-        }}
-        >Create New Project</button>
+        <button
+          className="bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition"
+          onClick={() => setOpenJoinModal(true)}
+        >
+          Join a New Project
+        </button>
+        <button
+          className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition"
+          onClick={() => setOpenCreateProjectModal(true)}
+        >
+          Create New Project
+        </button>
       </div>
 
       <div className="w-full mx-auto">
-        <div className='flex justify-between items-center mb-6 relative'>
-          <h1 className="text-2xl font-bold text-gray-800">List of Projects</h1>
+        <div className="flex justify-between items-center mb-6 relative">
+          <h1 className="text-2xl font-bold text-gray-800">List of All Projects</h1>
 
           <div className="relative">
             <button
@@ -99,42 +106,46 @@ const [openModal, setOpenModal] = useState<boolean>(false);
           </div>
         </div>
 
-        {display === 'List' && (
-  <div>
-    {projects.map((item) => (
-      <ProjectCard
-        key={item.projectId}
-        projectId={item.projectId}
-        pname={item.project.pname}
-        uname={item.project.owner.uname}
-        dueDate={item.project.dueDate ? new Date(item.project.dueDate).toISOString().split('T')[0] : ''}
-        status={item.project.status}
-        refresh={getProjects}
-      />
-    ))}
-  </div>
-)}
-
-
-
-        {display === 'Kanban' && (
-  <Kanban
-    project={projects.map((item) => ({
-      projectId: item.projectId,
-      pname: item.project.pname,
-      uname: item.project.owner.uname,
-      dueDate: item.project.dueDate
-        ? new Date(item.project.dueDate).toISOString().split('T')[0]
-        : '',
-      status: item.project.status,
-    }))}
-  />
-)}
-
+        {loading ? (
+          <Loader />
+        ) : display === 'List' ? (
+          <div>
+            {projects.map((item) => (
+              <ProjectCard
+                key={item.projectId}
+                // projectId={item.projectId}
+                // pname={item.project.pname}
+                // uname={[item.project.owner.uname, item.project.owner.uid]}
+                // dueDate={
+                //   item.project.dueDate
+                //     ? new Date(item.project.dueDate).toISOString().split('T')[0]
+                //     : ''
+                // }
+                // status={item.project.status}
+                item={item}
+                refresh={getProjects}
+              />
+            ))}
+          </div>
+        ) : (
+          <Kanban
+            project={projects.map((item) => ({
+              projectId: item.projectId,
+              pname: item.project.pname,
+              uname: [item.project.owner.uname, item.project.owner.uid],
+              dueDate: item.project.dueDate
+                ? new Date(item.project.dueDate).toISOString().split('T')[0]
+                : '',
+              status: item.project.status,
+            }))}
+          />
+        )}
       </div>
-      {openModal && (
-        <CreateProjectModal closeModal={setOpenModal} />
+
+      {openCreateProjectModal && (
+        <CreateProjectModal closeModal={setOpenCreateProjectModal} />
       )}
+      {openJoinModal && <JoinProject closeModal={setOpenJoinModal} />}
     </div>
   );
 };

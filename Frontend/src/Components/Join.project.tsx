@@ -12,23 +12,19 @@ interface ModalProps{
 }
 
 const JoinProject:React.FC<ModalProps> = ({closeModal}) => {
-    
-   const [title, setTitle] = useState<string>('');
-   const [description, setDescription] = useState<string>('');
-   const [endDate, setEndDate] = useState<string>('');
+   const [projectId, setProjectId] = useState<string>('');
+
     const {email}=useSelector((state:any) => state.user);
 
-    const handleCreateProject=async()=>{
+    const handleJoinProject=async()=>{
         const projectData={
-            title,
-            description,
-            endDate,
-            userId: email,
+            projectId,
+            memberId: email,
         }
         console.log("Project Data: ", projectData);
-        const response=await axios.post(BASE_URL+"tasks/create-project",projectData,{withCredentials:true});
+        const response=await axios.post(BASE_URL+"tasks/join-project",projectData,{withCredentials:true});
         if(response.status===200){
-            toast.success("Project created successfully");
+            toast.success("Project joined successfully");
             closeModal(false);
         }
     }
@@ -45,41 +41,26 @@ const JoinProject:React.FC<ModalProps> = ({closeModal}) => {
                 <IoIosCloseCircleOutline />
             </button>
             <h2 className='text-xl font-semibold mb-4'>Join Project</h2>
+            <p className='mb-3 text-gray-700'>You may get a Project Id in your email.Check your inbox or spam folder.</p>
             <form>
             <div className='mb-4'>
                 <label className='block text-sm font-medium mb-1'>Project ID</label>
                 <input
                 type='text'
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                value={projectId}
+                onChange={(e) => setProjectId(e.target.value)}
                 className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
                 placeholder='Enter The Project ID'
                 />
             </div>
-            <div className='mb-4'>
-                <label className='block text-sm font-medium mb-1'>Description</label>
-                <textarea
-                className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-                placeholder='Enter project description'
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                ></textarea>
-            </div>
-            <div className='mb-4'>
-                <label className='block text-sm font-medium mb-1'>Due Date</label>
-                <input
-                type='date'
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-                />  
-            </div>
+           
+            
             <button
                 type='submit'
                 className='w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors'
-                onClick={handleCreateProject}
+                onClick={handleJoinProject}
             >
-                Create Project
+                Join Project
             </button>
             </form>
         </div>

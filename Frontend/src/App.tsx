@@ -3,6 +3,7 @@ import SignUpSIngIn from "./Components/SignUpSIngIn"
 import Homepage from "./pages/Home.page"
 import Projects from "./Components/Projects"
 import Dashboard from "./Components/Dashboard"
+import ProjectDetails from "./Components/Project.Details"
 
 
 function App() {
@@ -14,8 +15,9 @@ function App() {
       <Route path="/home" element={<Homepage/>}>
       <Route path="/home" element={<Dashboard/>}/>
       <Route path="/home/projects" element={<Projects/>}/>
+      <Route path="/home/project/:projectId" element={<ProjectDetails/>}/>
       </Route>
-          <Route path="*" element={<Navigate to="/" />} />
+      <Route path="*" element={<Navigate to="/" />} />
 
     </Routes>
 
