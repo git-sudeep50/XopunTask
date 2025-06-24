@@ -31,6 +31,12 @@ export class TasksController {
     return res;
   }
 
+  @Get('all-tasks/:email')
+  async getAllTasks(@Param('email') email:string){
+    const res = await this.tasksService.getAllUserTasks(email);
+    return res;
+  }
+
   @Get('project-members/:projectId')
   async getProjectMembers(@Param('projectId') projectId: string) {
     const res = await this.tasksService.getAllProjectMembers(projectId);
