@@ -74,6 +74,38 @@ export class TasksService {
     }
   }
 
+  async getAllUserTasks(userId:string){
+    try{
+      const user = await this.prisma.user.findUnique({where:{
+        uid:userId
+      }});
+
+      if(!user) throw new NotFoundException('User not found');
+
+      const tasks = await  this.prisma.userTasks.findMany({
+        where:{
+          userId:userId
+        },
+        include:{
+          tasks:true
+        }
+      });
+
+      return {tasks}
+
+
+    }catch(error){
+      if(error instanceof HttpException) throw error;
+      throw new HttpException(
+        {
+          message: 'Failed to get user tasks',
+          error: error.message || 'Unknown error',
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      )
+    }
+  }
+
   async getUserTasksByDate(userId: string, date: string) {
     try {
       const dateObj = new Date(date);
@@ -129,6 +161,29 @@ export class TasksService {
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
+    }
+  }
+
+  async getTaskDetail(taskId:string){
+    try{
+      const task = await this.prisma.task.findUnique({
+        where:{
+          tid:taskId
+        },
+        include:{
+          UserTasks:true
+        }
+      })
+
+      return {task}
+    }catch(error){
+       throw new HttpException(
+        {
+          message: 'Failed to get Task',
+          error: error.message || 'Unknown error',
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      )
     }
   }
 
