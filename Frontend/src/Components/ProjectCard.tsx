@@ -4,7 +4,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { FaClipboardList } from "react-icons/fa";
 import { useSelector } from "react-redux";
-import { useNavigate, useNavigation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 interface ProjectCardProps {
   item: {
@@ -27,13 +27,13 @@ const ProjectCard: React.FC<ProjectCardProps & { projectId: string; refresh: () 
   item,
   refresh,
 }) => {
-  const projectId = item.projectId;
-  const pname = item.project.pname;
-  const uname = [item.project.owner.uname, item.project.owner.uid];
-  const dueDate = item.project.dueDate
-    ? new Date(item.project.dueDate).toISOString().split('T')[0]
+   const projectId = item?.projectId;
+  const pname = item?.project.pname;
+  const uname = [item?.project.owner.uname, item?.project.owner.uid];
+  const dueDate = item?.project.dueDate
+    ? new Date(item?.project.dueDate).toISOString().split('T')[0]
     : '';
-  const status = item.project.status;
+  const status = item?.project.status;
 
   const [currentStatus, setCurrentStatus] = useState(status);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -71,9 +71,6 @@ const ProjectCard: React.FC<ProjectCardProps & { projectId: string; refresh: () 
 
   return (
     <div className="relative cursor-pointer h-fit bg-gray-50 shadow-2xl rounded-lg w-full mb-4 border border-gray-700"
-      // onClick={() => {
-      //   navigate(`/home/project/${projectId}`, { state: { item: item } });
-      // }}
     >
       <div className='flex justify-between items-center'>
         <div  onClick={() => {

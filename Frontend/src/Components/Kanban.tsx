@@ -5,6 +5,7 @@ import { Draggable } from './Draggable';
 import { useSelector } from 'react-redux';
 import { BASE_URL } from '../utils/contsant';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 interface Project {
   projectId: string;
@@ -30,7 +31,7 @@ const Kanban: React.FC<KanbanProps> = ({ project }) => {
 
   const [kanbanData, setKanbanData] = useState(initialState);
 
-  
+  const navigate=useNavigate();
 
 const handleDragEnd = async (event: any) => {
   const { active, over } = event;
@@ -86,7 +87,11 @@ const handleDragEnd = async (event: any) => {
               <h2 className="text-lg font-semibold  mb-3">{column}</h2>
               {kanbanData[column].map((proj) => (
                 <Draggable key={proj.projectId} id={proj.projectId}>
-                  <div className="bg-gray-300  p-3 rounded shadow mb-3">
+                  <div className="bg-red-500 p-3 rounded shadow mb-3"
+                    onClick={() => {
+                       navigate(`/home/project/${proj.projectId}`, { state: { item: proj } });
+                    }}
+                  >
                     <h3 className="font-bold">{proj.pname}</h3>
                     <p className="text-sm text-gray-500">Owner: {proj.uname}</p>
                    <p className="text-black text-base font-normal mt-1">

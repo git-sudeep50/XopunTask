@@ -113,16 +113,8 @@ const Projects: React.FC = () => {
             {projects.map((item) => (
               <ProjectCard
                 key={item.projectId}
-                // projectId={item.projectId}
-                // pname={item.project.pname}
-                // uname={[item.project.owner.uname, item.project.owner.uid]}
-                // dueDate={
-                //   item.project.dueDate
-                //     ? new Date(item.project.dueDate).toISOString().split('T')[0]
-                //     : ''
-                // }
-                // status={item.project.status}
                 item={item}
+                
                 refresh={getProjects}
               />
             ))}

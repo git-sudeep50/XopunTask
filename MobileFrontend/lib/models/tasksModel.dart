@@ -2,8 +2,8 @@ class Task {
   final String id;
   final String title;
   final String description;
-  final String status; // "Todo", "In Progress", "Done", "Deadline"
-  final String priority; // "Low", "Medium", "High"
+  final String status;
+  final String priority;
   final String assignedTo;
   final DateTime dueDate;
 
@@ -16,7 +16,23 @@ class Task {
     required this.assignedTo,
     required this.dueDate,
   });
+
+  factory Task.fromJson(Map<String, dynamic> json) {
+    return Task(
+      id: json['tid'],
+      title: json['tname'],
+      description: json['description'],
+      status: json['status'],
+      priority: json['priority'],
+      assignedTo: json['ownerId'],
+      dueDate: DateTime.parse(json['dueDate']),
+    );
+  }
 }
+
+
+
+  
 
 List<Task> dummyTasks = [
   Task(

@@ -4,7 +4,7 @@ import 'package:task_manager/models/projectMemberModel.dart';
 import 'package:task_manager/models/userProjectsModel.dart';
 
 class ProjectService {
-  static const String baseUrl = 'http://192.168.188.8:7000/tasks';
+  static const String baseUrl = 'http://192.168.11.8:7000/tasks';
 
   static Future<List<UserProject>> getUserProjects(String userEmail) async {
     final url = Uri.parse('$baseUrl/projects/$userEmail');
@@ -86,7 +86,7 @@ class ProjectService {
       "description": description,
       "userId": userId,
       "endDate":
-          endDate.toIso8601String().split('T').first, // 'YYYY-MM-DD' format
+          endDate.toIso8601String().split('T').first, 
     };
 
     try {

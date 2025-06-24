@@ -2,7 +2,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class AuthService {
-  static const String baseurl = "http://192.168.188.8:7000/auth";
+  static const String baseurl = "http://192.168.11.8:7000/auth";
 
   static Future<String?> generateOtp(String email) async {
     try {
@@ -17,7 +17,7 @@ class AuthService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
         print("OTP Sent Successfully");
-        return data["message"]; // or `data["otp"]` if backend returns it
+        return data["message"]; 
       } else {
         print("Failed to send OTP: ${response.statusCode}");
         print("Response body: ${response.body}");
@@ -62,7 +62,7 @@ class AuthService {
           "token": body["token"],
         };
       } else {
-        // ✅ Fallback added here to avoid "null" in error message
+       
         return {
           "verified": false,
           "message":
