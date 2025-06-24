@@ -37,6 +37,11 @@ export class TasksController {
     return res;
   }
 
+  @Get('task/:id')
+  async getTaskInfo(@Param('id') id:string){
+    return await this.tasksService.getTaskDetail(id);
+  }
+
   @Get('project-members/:projectId')
   async getProjectMembers(@Param('projectId') projectId: string) {
     const res = await this.tasksService.getAllProjectMembers(projectId);

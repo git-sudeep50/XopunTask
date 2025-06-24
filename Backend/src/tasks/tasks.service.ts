@@ -164,6 +164,29 @@ export class TasksService {
     }
   }
 
+  async getTaskDetail(taskId:string){
+    try{
+      const task = await this.prisma.task.findUnique({
+        where:{
+          tid:taskId
+        },
+        include:{
+          UserTasks:true
+        }
+      })
+
+      return {task}
+    }catch(error){
+       throw new HttpException(
+        {
+          message: 'Failed to get Task',
+          error: error.message || 'Unknown error',
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      )
+    }
+  }
+
   async getSubtasks(taskId: string) {
     try {
       const result = await this.prisma.$queryRaw`
