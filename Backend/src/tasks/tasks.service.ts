@@ -16,6 +16,8 @@ import { validate } from 'class-validator';
 import { UpdateProjectDto } from './dto/update-project-dto';
 import { AssignTaskDto } from './dto/assign-task-dto';
 import { CreateSubtaskDto } from './dto/create-subtask-dto';
+import { AssignSubTaskDto } from './dto/assign-subtask-dto';
+import { UpdateSubTaskDto } from './dto/update-subtask-dto';
 
 @Injectable()
 export class TasksService {
@@ -96,11 +98,11 @@ export class TasksService {
   }
 
   async getTasksByProject(projectId: string) {
-    try{
+    try {
       const project = await this.prisma.project.findUnique({
         where: {
           pid: projectId,
-        }
+        },
       });
 
       if (!project) {
@@ -111,11 +113,14 @@ export class TasksService {
         where: {
           projectId: projectId,
         },
+        include: {
+          UserTasks: true,
+        },
       });
 
       return tasks;
     } catch (error) {
-      if(error instanceof HttpException) throw error;
+      if (error instanceof HttpException) throw error;
 
       throw new HttpException(
         {
@@ -128,8 +133,8 @@ export class TasksService {
   }
 
   async getSubtasks(taskId: string) {
-  try {
-    const result = await this.prisma.$queryRaw`
+    try {
+      const result = await this.prisma.$queryRaw`
       SELECT 
         t.tid AS task_id,
         t.title AS task_title,
@@ -143,12 +148,12 @@ export class TasksService {
       WHERE 
         t.tid = ${taskId};
     `;
-    console.log("Result:", result);
-    return result;
-  } catch (error) {
-    throw new Error(`Failed to fetch subtasks: ${error.message}`);
+      console.log('Result:', result);
+      return result;
+    } catch (error) {
+      throw new Error(`Failed to fetch subtasks: ${error.message}`);
+    }
   }
-}
 
   async createProject(createProjectDto: CreateProjectDto) {
     const data = {
@@ -226,7 +231,7 @@ export class TasksService {
   }
 
   async crateSubtask(createSubtaskDto: CreateSubtaskDto) {
-    try{
+    try {
       const task = await this.prisma.task.findUnique({
         where: { tid: createSubtaskDto.taskId },
       });
@@ -235,9 +240,31 @@ export class TasksService {
       }
 
       const data = {
-        
-      }
-    }catch(error){
+        tname: createSubtaskDto.subtaskName,
+        description: createSubtaskDto.description,
+        startDate: createSubtaskDto.startDate
+          ? new Date(createSubtaskDto.startDate)
+          : new Date(),
+        dueDate: createSubtaskDto.dueDate
+          ? new Date(createSubtaskDto.dueDate)
+          : null,
+        ownerId: createSubtaskDto.ownerId,
+        taskId: createSubtaskDto.taskId,
+        priority: createSubtaskDto.priority,
+      };
+
+      const subtask = await this.prisma.subtask.create({ data });
+      const userSubtasks = await this.prisma.userSubTasks.create({
+        data: {
+          userId: createSubtaskDto.ownerId,
+          subTaskId: subtask.sid,
+        },
+      });
+
+      return { message: 'Subtask created successfully', subtask };
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+
       throw new HttpException(
         {
           message: 'Failed to create subtask',
@@ -294,6 +321,52 @@ export class TasksService {
     }
   }
 
+  async updateSubTask(subTaskId: string, updateSubTaskDto: UpdateSubTaskDto) {
+    try {
+      const subTask = await this.prisma.subtask.findUnique({
+        where: { sid: subTaskId },
+      });
+
+      if (!subTask) {
+        throw new NotFoundException('Sub Task not found');
+      }
+
+      if (updateSubTaskDto.startDate)
+        updateSubTaskDto.startDate = new Date(updateSubTaskDto.startDate);
+      if (updateSubTaskDto.dueDate)
+        updateSubTaskDto.dueDate = new Date(updateSubTaskDto.dueDate);
+
+      const data = {
+        tname: updateSubTaskDto.subtaskName,
+        description: updateSubTaskDto.description,
+        startDate: updateSubTaskDto.startDate,
+        dueDate: updateSubTaskDto.dueDate,
+        priority: updateSubTaskDto.priority,
+        status: updateSubTaskDto.status,
+      };
+
+      const updated = await this.prisma.subtask.update({
+        where: { sid: subTaskId },
+        data,
+      });
+
+      return {
+        message: 'Sub-Task updated successfully',
+        updatedTask: updated,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+
+      throw new HttpException(
+        {
+          message: 'Failed to update sub-task',
+          error: error.message || 'Unknown error',
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   async assignTask(assignTaskDto: AssignTaskDto) {
     try {
       const task = await this.prisma.task.findUnique({
@@ -331,6 +404,50 @@ export class TasksService {
       throw new HttpException(
         {
           message: 'Failed to assign task',
+          error: error.message || 'Unknown error',
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async assignSubTask(assignSubTaskDto: AssignSubTaskDto) {
+    try {
+      const task = await this.prisma.subtask.findUnique({
+        where: { sid: assignSubTaskDto.subTaskId },
+      });
+
+      if (!task) {
+        throw new NotFoundException('Task not found');
+      }
+
+      const users = await this.prisma.user.findMany({
+        where: { uid: { in: assignSubTaskDto.userIds } },
+      });
+
+      if (users.length !== assignSubTaskDto.userIds.length) {
+        throw new NotFoundException('One or more users not found');
+      }
+
+      const userTasks = await this.prisma.userSubTasks.createMany({
+        data: assignSubTaskDto.userIds.map((uid) => {
+          return {
+            userId: uid,
+            subTaskId: assignSubTaskDto.subTaskId,
+          };
+        }),
+      });
+
+      return {
+        message: 'Sub Task assigned successfully',
+        userTasks,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+
+      throw new HttpException(
+        {
+          message: 'Failed to assign sub task',
           error: error.message || 'Unknown error',
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -486,6 +603,84 @@ export class TasksService {
       throw new HttpException(
         {
           message: 'Failed to join project',
+          error: error.message || 'Unknown error',
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async deleteProject(projectId: string) {
+    try {
+      const project = await this.prisma.project.findUnique({
+        where: { pid: projectId },
+      });
+
+      if(!project)
+        throw new HttpException('Project does not exist', HttpStatus.NOT_FOUND);
+
+      const deleted = await this.prisma.project.delete({
+        where: { pid: projectId },
+      });
+      return { message: 'Project deleted successfully', deleted }
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+
+      throw new HttpException(
+        {
+          message: 'Failed to delete project',
+          error: error.message || 'Unknown error',
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async deleteTask(taskId: string) {
+    try {
+      const task = await this.prisma.task.findUnique({
+        where: { tid: taskId },
+      })
+
+      if(!task)
+        throw new HttpException('Task does not exist', HttpStatus.NOT_FOUND);
+
+      const deleted = await this.prisma.task.delete({
+        where: { tid: taskId },
+      });
+      return { message: 'Task deleted successfully', deleted }
+    } catch (error) {
+      if(error instanceof HttpException) throw error;
+
+      throw new HttpException(
+        {
+          message: 'Failed to delete task',
+          error: error.message || 'Unknown error',
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async deleteSubtask(subtaskId: string) {
+    try {
+      const subTask = await this.prisma.subtask.findUnique({
+        where: { sid: subtaskId },
+      });
+
+      if(!subTask)
+        throw new HttpException('Subtask does not exist', HttpStatus.NOT_FOUND);
+
+      const deleted = await this.prisma.subtask.delete({
+        where: { sid: subtaskId },
+      });
+      return { message: 'Subtask deleted successfully', deleted }
+    } catch (error) {
+      if(error instanceof HttpException) throw error;
+      
+      throw new HttpException(
+        {
+          message: 'Failed to delete subtask',
           error: error.message || 'Unknown error',
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
