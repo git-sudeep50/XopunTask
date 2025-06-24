@@ -20,7 +20,6 @@ import { CreateSubtaskDto } from './dto/create-subtask-dto';
 import { AssignSubTaskDto } from './dto/assign-subtask-dto';
 import { JwtAuthGuard } from 'src/Guards/auth.guard';
 
-@UseGuards(JwtAuthGuard)
 @Controller('tasks')
 export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
