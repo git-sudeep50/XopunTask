@@ -47,7 +47,7 @@ void _joinProject(String projectId) async {
   }
 }
 
-  // Load Projects
+  
   void loadProjects() async {
     final email = await PreferenceHelper.getuserEmail();
     try {
@@ -58,12 +58,12 @@ void _joinProject(String projectId) async {
         isLoading = false;
       });
     } catch (e) {
-      print("❌ Error loading projects: $e");
+      print(" Error loading projects: $e");
       setState(() => isLoading = false);
     }
   }
 
-  // Create Project
+  
   void _createProject(String name, String description, String date) async {
     final email = await PreferenceHelper.getuserEmail();
     final result = await ProjectService.createProject(
@@ -74,14 +74,14 @@ void _joinProject(String projectId) async {
     );
 
     if (result["success"]) {
-      print("✅ Project Created: ${result["project"]}");
-      loadProjects(); // Refresh list
+      print(" Project Created: ${result["project"]}");
+      loadProjects(); 
     } else {
-      print("❌ Error: ${result["message"]}");
+      print(" Error: ${result["message"]}");
     }
   }
 
-  // Show Project Creation Dialog
+  
   void _showAddProjectDialog() {
     String name = '';
     String description = '';
@@ -161,7 +161,7 @@ void _joinProject(String projectId) async {
     );
   }
 
-  // Show Join Project Dialog
+  
   void _showJoinProjectDialog() {
     String code = '';
     showDialog(
@@ -192,7 +192,7 @@ void _joinProject(String projectId) async {
     );
   }
 
-  // Build Floating Buttons
+  
   Widget buildFloatingButtons() {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -212,7 +212,7 @@ void _joinProject(String projectId) async {
     );
   }
 
-  // Build Project Sections
+  
   Widget buildProjectSection(String title, List<UserProject> projects) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,

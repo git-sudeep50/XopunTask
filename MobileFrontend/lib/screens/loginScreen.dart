@@ -70,7 +70,7 @@ class _AuthScreenState extends State<AuthScreen> {
       final error = response?["message"];
       print("Signup failed: $error");
 
-      // Show error on UI
+     
     }
   }
 
@@ -100,7 +100,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                   ? "Welcome Back 👋"
                                   : otpSent
                                   ? "Enter OTP to Continue"
-                                  : "Create Account 📝",
+                                  : "Create Account ",
                               style: const TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.bold,
