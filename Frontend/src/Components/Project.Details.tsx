@@ -48,7 +48,7 @@ const ProjectDetails = () => {
 
   const getMember = async () => {
     try {
-      const response = await axios.get(`${BASE_URL}tasks/project-members/${projectId}`);
+      const response = await axios.get(`${BASE_URL}tasks/project-members/${projectId}`,{withCredentials:true});
       setMembers(response.data);
     } catch (error) {
       console.error('Error fetching members:', error);
@@ -163,11 +163,12 @@ const ProjectDetails = () => {
   display === "List" ? (
     <div className="h-[360px] max-h-[360px] overflow-y-scroll space-y-4 pr-2">
       {tasks.map((task: any) => (
-        <TaskCard key={task.taskId} task={task} refresh={getTask} />
+        <TaskCard key={task.taskId} task={task} refresh={getTask} member={members} />
       ))}
     </div>
   ) : (
-    <TaskKanban tasks={tasks} refresh={getTask} />
+    <TaskKanban tasks={tasks} refresh={getTask} members={members} />
+
 
   )
 ) : (

@@ -28,7 +28,7 @@ const Projects: React.FC = () => {
   const getProjects = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(BASE_URL + `tasks/projects/${email}`);
+      const response = await axios.get(BASE_URL + `tasks/projects/${email}`,{withCredentials:true});
       setProjects(response.data);
     } catch (error) {
       console.error("Error fetching projects:", error);

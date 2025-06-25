@@ -87,7 +87,7 @@ const handleDragEnd = async (event: any) => {
               <h2 className="text-lg font-semibold  mb-3">{column}</h2>
               {kanbanData[column].map((proj) => (
                 <Draggable key={proj.projectId} id={proj.projectId}>
-                  <div className="bg-red-500 p-3 rounded shadow mb-3"
+                  <div className="p-3 rounded shadow mb-3"
                     onClick={() => {
                        navigate(`/home/project/${proj.projectId}`, { state: { item: proj } });
                     }}

@@ -1,12 +1,37 @@
-import React from 'react';
-import { Briefcase, CheckCircle, Clock } from 'lucide-react'; // Icons (optional, from lucide-react)
+import React, { useEffect, useState } from 'react';
+import { Briefcase, CheckCircle, Clock } from 'lucide-react'; 
 import { useSelector } from 'react-redux';
+import TaskToday from './Task.Today';
+import toast from 'react-hot-toast';
+import { BASE_URL } from '../utils/contsant';
+import axios from 'axios';
 
 const Dashboard: React.FC = () => {
 
   const {email,userName}=useSelector((state:any) => state.user);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const getProjects = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(BASE_URL + `tasks/projects/${email}`,{withCredentials:true});
+      setProjects(response.data);
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+      toast.error("Failed to fetch projects.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
+    getProjects();
+  }, []);
+console.log(projects);
 
+  const completed= projects.filter((p) => p.project.status === 'COMPLETED');
+  const pending=projects.filter((p) => p.project.status === 'ASSIGNED');
+  const inProgress=projects.filter((p) => p.project.status === 'PROGRESS');
   const statistics = [
     { title: 'Tasks Completed', icon:  <CheckCircle size={18} />, count: 24, days: 2 },
     { title: 'Tasks Pending', icon: <Clock size={18}/>, count: 10, days: 5 },
@@ -65,8 +90,8 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
             <p className="font-bold text-xl mb-3">Task Today</p>
-        <div className='overflow-y-scroll h-96 bg-black'>
-
+        <div className='overflow-y-scroll h-96 bg-gray-300'>
+          <TaskToday/>
         </div>
 
     </div>
