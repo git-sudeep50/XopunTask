@@ -20,7 +20,6 @@ import { CreateSubtaskDto } from './dto/create-subtask-dto';
 import { AssignSubTaskDto } from './dto/assign-subtask-dto';
 import { JwtAuthGuard } from 'src/Guards/auth.guard';
 
-@UseGuards(JwtAuthGuard)
 @Controller('tasks')
 export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
@@ -29,6 +28,17 @@ export class TasksController {
   async getProjects(@Param('email') email: string) {
     const res = await this.tasksService.getUserProjects(email);
     return res;
+  }
+
+  @Get('all-tasks/:email')
+  async getAllTasks(@Param('email') email:string){
+    const res = await this.tasksService.getAllUserTasks(email);
+    return res;
+  }
+
+  @Get('task/:id')
+  async getTaskInfo(@Param('id') id:string){
+    return await this.tasksService.getTaskDetail(id);
   }
 
   @Get('project-members/:projectId')

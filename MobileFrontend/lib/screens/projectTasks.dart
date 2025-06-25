@@ -1,150 +1,552 @@
 import 'package:flutter/material.dart';
-import 'package:kanban_board/kanban_board.dart';
-
-final List<Map<String, dynamic>> groupData = [
-  {"id": "assigned", "name": "  Assigned", "color": Colors.blue.shade50},
-  {"id": "in_progress", "name": "  In Progress", "color": Colors.orange.shade50},
-  {"id": "completed", "name": "  Completed", "color": Colors.green.shade50},
-];
-
-class KanbanGroupItem extends KanbanBoardGroupItem {
-  final String itemId;
-  final String title;
-  final String? subtitle;
-  final String? tag;
-  final Color? tagColor;
-  final String? dueDate;
-
-  KanbanGroupItem({
-    required this.itemId,
-    required this.title,
-    this.subtitle,
-    this.tag,
-    this.tagColor,
-    this.dueDate,
-  });
-
-  @override
-  String get id => itemId;
-}
+import 'package:flutter/scheduler.dart';
+import 'package:task_manager/models/kanbanModels.dart';
+import 'package:task_manager/screens/tasksDetailsScreen.dart';
+import 'package:task_manager/services/shared_pref_services.dart';
+import 'package:task_manager/services/tasksServices.dart';
 
 class TasksTab extends StatefulWidget {
-  const TasksTab({super.key});
+  final String projectid;
+  const TasksTab({Key? key, required this.projectid}) : super(key: key);
 
   @override
-  State<TasksTab> createState() => _TasksTabState();
+  _TasksTabState createState() => _TasksTabState();
 }
 
 class _TasksTabState extends State<TasksTab> {
-  final KanbanBoardController _controller = KanbanBoardController();
-  late List<KanbanBoardGroup<String, KanbanGroupItem>> kanbanGroups;
+  bool isLoading = true;
+  List<KanbanGroup> groups = [];
+  final ScrollController _scrollController = ScrollController();
+  Offset? _lastDragOffset;
+  late final Ticker _ticker;
 
   @override
   void initState() {
     super.initState();
-    kanbanGroups = groupData.map((data) {
-      return KanbanBoardGroup<String, KanbanGroupItem>(
-        id: data['id'] as String,
-        name: data['name'] as String,
-        items: List.generate(3, (i) {
-          return KanbanGroupItem(
-            itemId: "${data['id']}_item_$i",
-            title: "Task ${i + 1}",
-            subtitle: "Assigned to: John",
-            tag: i % 2 == 0 ? "Urgent" : "Low Priority",
-            tagColor: i % 2 == 0 ? Colors.red : Colors.green,
-            dueDate: "June ${28 + i}",
-          );
-        }),
-      );
-    }).toList();
-  }
+    loadTasks();
 
-  void _addNewTaskToGroup(String groupId) {
-    final group = kanbanGroups.firstWhere((g) => g.id == groupId);
-    final newTask = KanbanGroupItem(
-      itemId: "${groupId}_item_${group.items.length}",
-      title: "New Task",
-      subtitle: "Assigned to: You",
-      tag: "Normal",
-      tagColor: Colors.blue,
-      dueDate: "July 1",
-    );
-    setState(() {
-      group.items.add(newTask);
+    _ticker = Ticker((_) {
+      if (_lastDragOffset == null) return;
+      final dx = _lastDragOffset!.dx;
+      const edgeThreshold = 80;
+      const scrollSpeed = 20;
+
+      if (dx < edgeThreshold) {
+        _scrollController.jumpTo(
+          (_scrollController.position.pixels - scrollSpeed).clamp(
+            0.0,
+            _scrollController.position.maxScrollExtent,
+          ),
+        );
+      } else if (dx > MediaQuery.of(context).size.width - edgeThreshold) {
+        _scrollController.jumpTo(
+          (_scrollController.position.pixels + scrollSpeed).clamp(
+            0.0,
+            _scrollController.position.maxScrollExtent,
+          ),
+        );
+      }
     });
+
+    _ticker.start();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return KanbanBoard(
-      groupDecoration: BoxDecoration(
-        border: Border.all(color: Colors.black),
-        borderRadius: BorderRadius.circular(15),
+  
+  DateTime? _selectedStartDate;
+  DateTime? _selectedDueDate;
+  final String _selectedStatus = 'ASSIGNED'; 
+  String _selectedPriority = 'LOW';
+
+ 
+
+  void _addNewTaskToGroup() async {
+    final formKey = GlobalKey<FormState>();
+    final titleCtrl = TextEditingController();
+    final descCtrl = TextEditingController();
+
+   
+    _selectedStartDate = DateTime.now();
+    _selectedDueDate = DateTime.now().add(Duration(days: 3));
+
+    _selectedPriority = 'LOW';
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      controller: _controller,
-      groups: kanbanGroups,
-      groupItemBuilder: _groupItemBuilder,
-      groupFooterBuilder: (ctx, groupId) {
-        return TextButton.icon(
-          onPressed: () => _addNewTaskToGroup(groupId),
-          icon: const Icon(Icons.add),
-          label: const Text("Add Task"),
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 16,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+          ),
+          child: SingleChildScrollView(
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Create Task',
+                    style: Theme.of(ctx).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Title
+                  TextFormField(
+                    controller: titleCtrl,
+                    decoration: const InputDecoration(labelText: 'Title'),
+                    validator:
+                        (v) => (v == null || v.isEmpty) ? 'Required' : null,
+                  ),
+
+                  // Description
+                  TextFormField(
+                    controller: descCtrl,
+                    decoration: const InputDecoration(labelText: 'Description'),
+                    maxLines: 2,
+                  ),
+
+                  // Priority
+                  DropdownButtonFormField<String>(
+                    value: _selectedPriority,
+                    decoration: const InputDecoration(labelText: 'Priority'),
+                    items:
+                        ['LOW', 'MEDIUM', 'HIGH']
+                            .map(
+                              (p) => DropdownMenuItem(value: p, child: Text(p)),
+                            )
+                            .toList(),
+                    onChanged: (v) => _selectedPriority = v!,
+                  ),
+
+                  // Due Date
+                  Row(
+                    children: [
+                      const Text('Due Date:'),
+                      TextButton(
+                        child: Text(
+                          '${_selectedDueDate!.day}/${_selectedDueDate!.month}/${_selectedDueDate!.year}',
+                        ),
+                        onPressed: () async {
+                          final d = await showDatePicker(
+                            context: ctx,
+                            initialDate: _selectedDueDate!,
+                            firstDate: DateTime.now(),
+                            lastDate: DateTime.now().add(Duration(days: 365)),
+                          );
+                          if (d != null) setState(() => _selectedDueDate = d);
+                        },
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    child: const Text('Create'),
+                    onPressed: () async {
+                      if (!formKey.currentState!.validate()) return;
+                      Navigator.of(ctx).pop();
+
+                      // 3️⃣ Build the request body
+                      final owner = await PreferenceHelper.getuserEmail();
+                      final body = {
+                        'taskName': titleCtrl.text.trim(),
+                        'description': descCtrl.text.trim(),
+                        'startDate':
+                            _selectedStartDate!
+                                .toIso8601String()
+                                .split('T')
+                                .first,
+                        'dueDate':
+                            _selectedDueDate!
+                                .toIso8601String()
+                                .split('T')
+                                .first,
+                        'projectId': widget.projectid,
+                        'ownerId': owner,
+                        'status': _selectedStatus,
+                        'priority': _selectedPriority,
+                      };
+
+                      
+                      try {
+                        await TaskService.createTask(body);
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('✅ Task created successfully'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        }
+                        await loadTasks();
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('❌ Creation failed: $e'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
+            ),
+          ),
         );
       },
-      onGroupItemMove: (oldG, oldI, newG, newI) {
-        if (oldG == null || oldI == null || newG == null || newI == null)
-          return;
-        setState(() {
-          final item = kanbanGroups[oldG].items.removeAt(oldI);
-          kanbanGroups[newG].items.insert(newI, item);
-        });
-      },
-      onGroupMove: (oldG, newG) {
-        // Optional: handle column reordering
-      },
     );
   }
 
-  Widget _groupItemBuilder(BuildContext context, String groupId, int itemIndex) {
-    final gIdx = kanbanGroups.indexWhere((g) => g.id == groupId);
-    final item = kanbanGroups[gIdx].items[itemIndex];
-    final bg = groupData[gIdx]['color'] as Color;
+  DateTime? _startDate;
+  DateTime? _dueDate;
+  String _status = 'ASSIGNED';
 
-    return Material(
-      color: Colors.transparent,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: const [
-            BoxShadow(color: Colors.grey, blurRadius: 4, offset: Offset(0, 3)),
-          ],
+
+  @override
+  void dispose() {
+    _ticker.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> loadTasks() async {
+    setState(() => isLoading = true);
+    try {
+      final tasks = await TaskService.fetchProjectTasks(widget.projectid);
+      Map<String, List<KanbanGroupItem>> map = {
+        'assigned': [],
+        'in_progress': [],
+        'completed': [],
+        'exceeded': [],
+      };
+
+      for (var t in tasks) {
+        final status =
+            t.status.toLowerCase() == 'progress'
+                ? 'in_progress'
+                : t.status.toLowerCase();
+
+        final assignedInitials = t.assignedTo
+            .map((email) => email.isNotEmpty ? email[0].toUpperCase() : '')
+            .join(', ');
+
+        map[status]?.add(
+          KanbanGroupItem(
+            id: t.id,
+            title: t.title,
+            subtitle: 'Assigned: $assignedInitials',
+            color:
+                status == 'assigned'
+                    ? Colors.blue.shade50
+                    : status == 'in_progress'
+                    ? Colors.orange.shade50
+                    : status == 'completed'
+                    ? Colors.green.shade50
+                    : Colors.red.shade100,
+            priority: t.priority,
+            dueDate: t.dueDate,
+            owner: t.ownerId,
+            assignedUserEmails: t.assignedTo,
+          ),
+        );
+      }
+
+      groups = [
+        KanbanGroup(id: 'assigned', name: 'Assigned', items: map['assigned']!),
+        KanbanGroup(
+          id: 'in_progress',
+          name: 'In Progress',
+          items: map['in_progress']!,
         ),
+        KanbanGroup(
+          id: 'completed',
+          name: 'Completed',
+          items: map['completed']!,
+        ),
+        KanbanGroup(id: 'exceeded', name: 'Exceeded', items: map['exceeded']!),
+      ];
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Failed to load tasks: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> _onDrop(KanbanGroupItem item, String toGroupId) async {
+    final from = groups.firstWhere((g) => g.items.any((i) => i.id == item.id));
+    final to = groups.firstWhere((g) => g.id == toGroupId);
+
+    setState(() {
+      from.items.removeWhere((i) => i.id == item.id);
+      to.items.add(item);
+    });
+
+    final statusMap = {
+      'assigned': 'ASSIGNED',
+      'in_progress': 'PROGRESS',
+      'completed': 'COMPLETED',
+      'exceeded': 'EXCEEDED',
+    };
+    final newStatus = statusMap[toGroupId]!;
+
+    try {
+      await TaskService.updateTaskStatus(item.id, newStatus);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Moved to ${to.name}"),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      setState(() {
+        to.items.removeWhere((i) => i.id == item.id);
+        from.items.add(item);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Update failed. Reverted."),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Widget _buildCard(KanbanGroupItem item) {
+    Color? tagColor;
+    final priority = item.priority?.toLowerCase();
+    if (priority == 'high')
+      tagColor = Colors.red;
+    else if (priority == 'medium')
+      tagColor = Colors.orange;
+    else if (priority == 'low')
+      tagColor = Colors.green;
+
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: item.color,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            if (item.subtitle != null)
+            Text(
+              item.title,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            if (item.owner != null && item.owner!.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(item.subtitle!, style: const TextStyle(color: Colors.grey, fontSize: 13)),
+                padding: const EdgeInsets.only(top: 4.0),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.person_outline,
+                      size: 14,
+                      color: Colors.grey,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      "Owner: ${item.owner}",
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
               ),
+
             const SizedBox(height: 6),
+
+            // Assigned avatars
+            Wrap(
+              spacing: 6,
+              children:
+                  item.assignedUserEmails.map((email) {
+                    final initial =
+                        email.trim().isNotEmpty ? email[0].toUpperCase() : '?';
+                    return CircleAvatar(
+                      radius: 12,
+                      backgroundColor: Colors.grey.shade300,
+                      child: Text(
+                        initial,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+            ),
+
+            const SizedBox(height: 8),
+
             Row(
               children: [
                 if (item.dueDate != null)
-                  Text("Due: ${item.dueDate}", style: TextStyle(fontSize: 12, color: Colors.grey[700])),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.calendar_today,
+                        size: 14,
+                        color: Colors.grey,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        "${item.dueDate!.day}/${item.dueDate!.month}/${item.dueDate!.year}",
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ],
+                  ),
                 const Spacer(),
-                if (item.tag != null)
-                  Icon(Icons.flag, size: 16, color: item.tagColor ?? Colors.blue),
+                if (item.priority != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: tagColor?.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      item.priority!.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: tagColor,
+                      ),
+                    ),
+                  ),
               ],
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildColumn(KanbanGroup group) {
+    return SizedBox(
+      width: 350,
+      child: Container(
+        margin: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade400),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: DragTarget<KanbanGroupItem>(
+          onWillAccept: (_) => true,
+          onAccept: (item) => _onDrop(item, group.id),
+          builder: (ctx, candidate, rejected) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color:
+                        group.id == 'assigned'
+                            ? Colors.blue.shade100
+                            : group.id == 'in_progress'
+                            ? Colors.orange.shade100
+                            : group.id == 'completed'
+                            ? Colors.green.shade100
+                            : Colors.red.shade200,
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(8),
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      group.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ),
+                const Divider(height: 1),
+                Expanded(
+                  child: Listener(
+                    onPointerMove: (event) => _lastDragOffset = event.position,
+                    onPointerUp: (_) => _lastDragOffset = null,
+                    child: ListView(
+                      padding: const EdgeInsets.all(8),
+                      children:
+                          group.items.map((item) {
+                            return LongPressDraggable<KanbanGroupItem>(
+                              data: item,
+                              feedback: Material(
+                                elevation: 4,
+                                child: SizedBox(
+                                  width: 280,
+                                  child: _buildCard(item),
+                                ),
+                              ),
+                              child: GestureDetector(
+                                onDoubleTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder:
+                                          (_) => TaskDetailsScreen(
+                                            taskId: item.id,
+                                          ),
+                                    ),
+                                  );
+                                },
+                                child: _buildCard(item),
+                              ),
+                            );
+                          }).toList(),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _addNewTaskToGroup,
+        icon: const Icon(Icons.add),
+        label: const Text("Add Task"),
+      ),
+      body:
+          isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+                controller: _scrollController,
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: groups.map(_buildColumn).toList(),
+                ),
+              ),
     );
   }
 }

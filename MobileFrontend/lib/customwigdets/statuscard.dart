@@ -20,7 +20,7 @@ class StatusCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: color, // Let your container's color show through
+      color: color, 
       borderRadius: BorderRadius.circular(10),
       clipBehavior: Clip.antiAlias,
       child: InkWell(

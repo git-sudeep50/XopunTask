@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:task_manager/models/projectMemberModel.dart';
 import 'package:task_manager/models/projectsModel.dart';
+import 'package:task_manager/screens/page.dart';
 import 'package:task_manager/screens/projectTasks.dart';
 import 'package:task_manager/services/PorjectServices.dart';
 
@@ -59,7 +60,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen>
     } catch (e) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text("❌ Error: $e")));
+      ).showSnackBar(SnackBar(content: Text(" Error: $e")));
     }
   }
 
@@ -122,7 +123,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen>
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
-          return Center(child: Text("❌ Error: ${snapshot.error}"));
+          return Center(child: Text("Error: ${snapshot.error}"));
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return const Center(child: Text("No members found"));
         }
@@ -157,30 +158,30 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen>
           ),
           const SizedBox(height: 12),
           Text(
-            "📝 Description:\n${project.description}",
+            "Description:\n${project.description}",
             style: const TextStyle(fontSize: 16),
           ),
           const SizedBox(height: 12),
           Text(
-            "🧑‍💼 Owner: ${project.ownerId}",
+            "Owner: ${project.ownerId}",
             style: const TextStyle(fontSize: 16),
           ),
           const SizedBox(height: 12),
           Text(
-            "📅 Start Date: ${project.startDate.toLocal().toString().split(' ')[0]}",
+            "Start Date: ${project.startDate.toLocal().toString().split(' ')[0]}",
           ),
           const SizedBox(height: 6),
           Text(
-            "📅 Due Date: ${project.dueDate.toLocal().toString().split(' ')[0]}",
+            "Due Date: ${project.dueDate.toLocal().toString().split(' ')[0]}",
           ),
           const SizedBox(height: 12),
           Text(
-            "📌 Status: ${project.status}",
+            "Status: ${project.status}",
             style: const TextStyle(fontSize: 16),
           ),
           const SizedBox(height: 12),
           Text(
-            "🔑 Your Role: ${widget.role}",
+            "Your Role: ${widget.role}",
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -189,7 +190,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen>
           ),
           const SizedBox(height: 16),
           const Divider(),
-          const Text("🆔 Project ID:"),
+          const Text("Project ID:"),
           SelectableText(
             project.pid,
             style: const TextStyle(color: Colors.grey),
@@ -212,7 +213,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen>
               controller: _tabController,
               children: [
                 _buildOverviewTab(),
-                TasksTab(),
+                TasksTab(projectid: widget.project.pid),
                 _buildMembersTab(),
               ],
             ),

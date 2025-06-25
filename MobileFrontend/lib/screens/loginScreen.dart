@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
 import 'package:task_manager/services/AuthServices.dart';
 import 'package:task_manager/services/shared_pref_services.dart';
 
 class AuthScreen extends StatefulWidget {
   AuthScreen({super.key, required this.loggedIn});
-  Function loggedIn;
+  final Function loggedIn;
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -70,7 +69,7 @@ class _AuthScreenState extends State<AuthScreen> {
       final error = response?["message"];
       print("Signup failed: $error");
 
-      // Show error on UI
+     
     }
   }
 
@@ -100,7 +99,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                   ? "Welcome Back 👋"
                                   : otpSent
                                   ? "Enter OTP to Continue"
-                                  : "Create Account 📝",
+                                  : "Create Account ",
                               style: const TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.bold,

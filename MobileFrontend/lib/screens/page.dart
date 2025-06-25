@@ -5,8 +5,6 @@ class NewPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(child: Text("Hello"),),
-    );
+    return Center(child: Text("Nothing Yet"),);
   }
 }
