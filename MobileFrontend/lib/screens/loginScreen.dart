@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
 import 'package:task_manager/services/AuthServices.dart';
 import 'package:task_manager/services/shared_pref_services.dart';
 
 class AuthScreen extends StatefulWidget {
   AuthScreen({super.key, required this.loggedIn});
-  Function loggedIn;
+  final Function loggedIn;
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();

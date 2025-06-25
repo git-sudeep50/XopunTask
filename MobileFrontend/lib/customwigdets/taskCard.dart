@@ -4,9 +4,9 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:task_manager/models/tasksModel.dart';
 
 class Taskcard extends StatefulWidget {
-  Taskcard({super.key, required this.task});
+  const Taskcard({super.key, required this.task});
 
-  Task task;
+  final Task task;
 
   @override
   State<Taskcard> createState() => _TaskcardState();

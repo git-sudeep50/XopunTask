@@ -1,83 +1,47 @@
+// lib/models/tasksModel.dart
+
 class Task {
   final String id;
   final String title;
   final String description;
+  final String ownerId;
   final String status;
   final String priority;
-  final String assignedTo;
+  final DateTime startDate;
   final DateTime dueDate;
+  final List<String> assignedTo;
 
   Task({
     required this.id,
     required this.title,
     required this.description,
+    required this.ownerId,
     required this.status,
     required this.priority,
-    required this.assignedTo,
+    required this.startDate,
     required this.dueDate,
+    required this.assignedTo,
   });
 
   factory Task.fromJson(Map<String, dynamic> json) {
+    // Safely grab UserTasks; if it's null or missing, default to an empty list
+    final rawUserTasks = json['UserTasks'] as List<dynamic>?;
+    final assigned =
+        rawUserTasks?.map((e) => e['userId'].toString()).toList() ?? <String>[];
+
     return Task(
-      id: json['tid'],
-      title: json['tname'],
-      description: json['description'],
-      status: json['status'],
-      priority: json['priority'],
-      assignedTo: json['ownerId'],
-      dueDate: DateTime.parse(json['dueDate']),
+      id: json['tid'] as String,
+      title: json['tname'] as String,
+      description: (json['description'] ?? '') as String,
+      ownerId: json['ownerId'] as String,
+      status: json['status'] as String,
+      priority: json['priority'] as String,
+      startDate: DateTime.parse(json['startDate'] as String),
+      dueDate: DateTime.parse(json['dueDate'] as String),
+      assignedTo: assigned,
     );
   }
 }
 
-
-
-  
-
-List<Task> dummyTasks = [
-  Task(
-    id: '1',
-    title: 'Design Login Screen',
-    description: 'Create UI for login with Flutter and Figma reference',
-    status: 'In Progress',
-    priority: 'High',
-    assignedTo: 'Alice',
-    dueDate: DateTime.now().add(Duration(days: 2)),
-  ),
-  Task(
-    id: '2',
-    title: 'Setup Firebase Auth',
-    description: 'Integrate Firebase Email/Password login',
-    status: 'Todo',
-    priority: 'Medium',
-    assignedTo: 'Bob',
-    dueDate: DateTime.now().add(Duration(days: 4)),
-  ),
-  Task(
-    id: '3',
-    title: 'Fix Scroll Bug',
-    description: 'Resolve overflow issue on homepage scroll',
-    status: 'Done',
-    priority: 'Low',
-    assignedTo: 'Charlie',
-    dueDate: DateTime.now().subtract(Duration(days: 1)),
-  ),
-  Task(
-    id: '4',
-    title: 'Create Project Model',
-    description: 'Add data class and mock list for local testing',
-    status: 'Deadline',
-    priority: 'High',
-    assignedTo: 'Diana',
-    dueDate: DateTime.now().add(Duration(hours: 12)),
-  ),
-  Task(
-    id: '5',
-    title: 'Write Unit Tests',
-    description: 'Cover auth service and utils',
-    status: 'In Progress',
-    priority: 'Medium',
-    assignedTo: 'Ethan',
-    dueDate: DateTime.now().add(Duration(days: 3)),
-  ),
-];
+// If you still need a dummy list:
+List<Task> dummyTasks = [];

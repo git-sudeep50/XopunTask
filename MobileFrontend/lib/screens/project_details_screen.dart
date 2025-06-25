@@ -211,7 +211,11 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen>
           Expanded(
             child: TabBarView(
               controller: _tabController,
-              children: [_buildOverviewTab(), TasksTab(projectid: widget.project.pid,), _buildMembersTab()],
+              children: [
+                _buildOverviewTab(),
+                TasksTab(projectid: widget.project.pid),
+                _buildMembersTab(),
+              ],
             ),
           ),
         ],

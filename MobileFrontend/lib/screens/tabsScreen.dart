@@ -16,7 +16,7 @@ class _TabsscreenState extends State<Tabsscreen> {
     Homepage(),
     Myprojectsscreen(),
     Homepage(),
-    Homepage(),
+    
   ];
 
   void _selectab(int index) {
@@ -40,16 +40,13 @@ class _TabsscreenState extends State<Tabsscreen> {
           ),
           BottomNavigationBarItem(
             icon: Icon(HeroIcons.rocket_launch),
-            label: "Home",
+            label: "Projects",
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            label: "Home",
+            icon: Icon(Icons.perm_contact_cal_outlined),
+            label: "Profile",
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            label: "Home",
-          ),
+          
         ],
       ),
     );
